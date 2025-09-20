@@ -5,10 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Loader2, Wand2, Edit, Download, Plus, Trash2, Smile, Palette } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import HamburgerMenu from "@/components/HamburgerMenu";
 
 const ImageEditor = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [prompt, setPrompt] = useState("");
@@ -109,15 +108,13 @@ const ImageEditor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-blue-50">
       {/* Header */}
-      <header className="border-b bg-card">
+      <header className="border-b bg-blue-600">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-card-foreground">Image Editor</h1>
-            <Button variant="outline" onClick={() => navigate("/")}>
-              Back to Home
-            </Button>
+            <h1 className="text-2xl font-bold text-white">Image Editor</h1>
+            <HamburgerMenu />
           </div>
         </div>
       </header>
