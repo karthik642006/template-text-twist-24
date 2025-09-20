@@ -13,6 +13,7 @@ const HamburgerMenu = () => {
     { title: "Home", path: "/" },
     { title: "Meme Editor", path: "/editor/blank" },
     { title: "Template Editor", path: "/template-editor" },
+    { title: "Image Editor", path: "/image-editor" },
     { title: "Image to GIF", path: "/image-to-gif" },
     { title: "About Us", path: "/about" },
     { title: "Pricing", path: "/pricing" },
