@@ -122,131 +122,76 @@ const ImageEditor = () => {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Prompt Section */}
-        <Card className="p-6 mb-8">
-          <div className="space-y-4">
+        <Card className="p-8 mb-8">
+          <div className="space-y-6">
             <div>
-              <label className="text-sm font-medium text-muted-foreground block mb-2">
-                Enter your image prompt
+              <label className="text-lg font-medium text-card-foreground block mb-4">
+                Prompt Box
               </label>
-              <div className="flex gap-4">
-                <Input
+              <div className="space-y-4">
+                <textarea
                   placeholder="Describe the image you want to generate..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  className="flex-1"
+                  className="w-full min-h-[120px] p-4 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   disabled={isGenerating}
                 />
-                <Button
-                  onClick={handleGenerate}
-                  disabled={isGenerating || !prompt.trim()}
-                  className="bg-primary hover:bg-primary/90"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="w-4 h-4 mr-2" />
-                      Generate
-                    </>
-                  )}
-                </Button>
+                <div className="flex justify-center">
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={isGenerating || !prompt.trim()}
+                    className="bg-primary hover:bg-primary/90 px-8 py-3 text-lg"
+                    size="lg"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="w-5 h-5 mr-2" />
+                        Generate
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
         </Card>
 
-        {/* Image Display and Edit Tools */}
+        {/* Generated Image */}
         {generatedImage && (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Generated Image */}
-            <div className="lg:col-span-3">
-              <Card className="p-4">
-                <div className="aspect-square relative">
-                  <img 
-                    src={generatedImage} 
-                    alt="Generated image" 
-                    className="w-full h-full object-contain rounded-lg"
-                  />
-                  <canvas 
-                    ref={canvasRef}
-                    className="absolute inset-0 w-full h-full"
-                    style={{ display: editMode ? 'block' : 'none' }}
-                  />
-                </div>
-              </Card>
+          <Card className="p-6 mb-8">
+            <div className="text-center mb-4">
+              <h2 className="text-lg font-medium text-card-foreground">Generated Image</h2>
             </div>
-
-            {/* Edit Tools Panel */}
-            <div className="lg:col-span-1">
-              <Card className="p-4">
-                <h3 className="font-semibold mb-4 text-card-foreground">Edit Tools</h3>
-                <div className="space-y-3">
-                  {/* Download Button */}
-                  <Button
-                    onClick={handleDownload}
-                    className="w-full justify-start bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Image
-                  </Button>
-
-                  {/* Edit Buttons */}
-                  <div className="border-t pt-3">
-                    <p className="text-sm text-muted-foreground mb-3">Edit Options</p>
-                    
-                    <Button
-                      onClick={() => handleEdit("add")}
-                      variant="outline"
-                      className="w-full justify-start mb-2"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Components
-                    </Button>
-
-                    <Button
-                      onClick={() => handleEdit("remove")}
-                      variant="outline"
-                      className="w-full justify-start mb-2"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Remove Elements
-                    </Button>
-
-                    <Button
-                      onClick={() => handleEdit("emotion")}
-                      variant="outline"
-                      className="w-full justify-start mb-2"
-                    >
-                      <Smile className="w-4 h-4 mr-2" />
-                      Change Emotions
-                    </Button>
-
-                    <Button
-                      onClick={() => handleEdit("color")}
-                      variant="outline"
-                      className="w-full justify-start mb-2"
-                    >
-                      <Palette className="w-4 h-4 mr-2" />
-                      Adjust Colors
-                    </Button>
-
-                    <Button
-                      onClick={() => setEditMode(!editMode)}
-                      variant={editMode ? "default" : "outline"}
-                      className="w-full justify-start"
-                    >
-                      <Edit className="w-4 h-4 mr-2" />
-                      {editMode ? "Exit Edit Mode" : "Enter Edit Mode"}
-                    </Button>
-                  </div>
-                </div>
-              </Card>
+            <div className="flex justify-center">
+              <div className="max-w-2xl w-full">
+                <img 
+                  src={generatedImage} 
+                  alt="Generated image" 
+                  className="w-full h-auto rounded-lg border border-border"
+                />
+              </div>
             </div>
+          </Card>
+        )}
+
+        {/* Download Section */}
+        {generatedImage && (
+          <div className="flex justify-center">
+            <Button
+              onClick={handleDownload}
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
+              size="lg"
+            >
+              <Download className="w-5 h-5 mr-2" />
+              Download
+            </Button>
           </div>
         )}
 
