@@ -109,7 +109,7 @@ const MemeCanvas = forwardRef<HTMLDivElement, MemeCanvasProps>(({
             <div
               key={field.id}
               data-text-element={field.id}
-              data-placeholder={!field.text}
+              {...(!field.text ? { 'data-placeholder': true } : {})}
               style={{
                 position: 'absolute',
                 cursor: 'move',
