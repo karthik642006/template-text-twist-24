@@ -207,9 +207,9 @@ const TemplateEditor = () => {
       type: 'text',
       x: 100,
       y: 100,
-      content: 'New Text',
+      content: 'Editable Text',
       fontSize: 24,
-      color: '#FFFFFF',
+      color: '#000000',
       fontWeight: 'bold'
     };
     setCustomElements(prev => [...prev, newElement]);
@@ -710,7 +710,8 @@ const TemplateEditor = () => {
                                      </div> : element.type === 'text' ? <div className="w-full h-full flex items-center justify-center text-center font-bold pointer-events-none" style={{
                           fontSize: element.fontSize,
                           color: element.color,
-                          fontWeight: element.fontWeight
+                          fontWeight: element.fontWeight,
+                          textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
                         }}>
                                      {element.content}
                                    </div> : null}
