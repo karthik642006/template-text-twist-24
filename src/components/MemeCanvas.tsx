@@ -70,7 +70,18 @@ const MemeCanvas = forwardRef<HTMLDivElement, MemeCanvasProps>(({
               transform: `rotate(${headerText.rotation}deg) scale(${headerText.scale})`,
               userSelect: 'none',
               touchAction: 'none',
-              zIndex: selectedTextId === headerText.id ? 10 : 1
+              zIndex: selectedTextId === headerText.id ? 10 : 1,
+              fontFamily: 'Impact, Arial, sans-serif',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              textTransform: 'uppercase',
+              lineHeight: 1.1,
+              background: 'white',
+              width: '100%',
+              padding: '0.5em 0',
+              textShadow: headerText.color === '#ffffff' || headerText.color === 'white' 
+                ? '2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000'
+                : 'none'
             }}
             onMouseDown={e => onMouseDown(e, headerText.id, 'text')}
             onTouchStart={e => onTouchStart(e, headerText.id, 'text')}
@@ -227,7 +238,18 @@ const MemeCanvas = forwardRef<HTMLDivElement, MemeCanvasProps>(({
               transform: `rotate(${footerText.rotation}deg) scale(${footerText.scale})`,
               userSelect: 'none',
               touchAction: 'none',
-              zIndex: selectedTextId === footerText.id ? 10 : 1
+              zIndex: selectedTextId === footerText.id ? 10 : 1,
+              fontFamily: 'Impact, Arial, sans-serif',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              textTransform: 'uppercase',
+              lineHeight: 1.1,
+              background: 'white',
+              width: '100%',
+              padding: '0.5em 0',
+              textShadow: footerText.color === '#ffffff' || footerText.color === 'white' 
+                ? '2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000'
+                : 'none'
             }}
             onMouseDown={e => onMouseDown(e, footerText.id, 'text')}
             onTouchStart={e => onTouchStart(e, footerText.id, 'text')}
