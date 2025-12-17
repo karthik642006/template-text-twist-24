@@ -19,6 +19,17 @@ export const loadFFmpeg = async () => {
   return ffmpeg;
 };
 
+const createBlobFromData = (data: Uint8Array | string, type: string): Blob => {
+  if (typeof data === 'string') {
+    return new Blob([data], { type });
+  }
+  // Create a new ArrayBuffer and copy data to ensure type compatibility
+  const buffer = new ArrayBuffer(data.length);
+  const view = new Uint8Array(buffer);
+  view.set(data);
+  return new Blob([buffer], { type });
+};
+
 export const trimVideo = async (file: File, startTime: number, endTime: number): Promise<string> => {
   const ffmpegInstance = await loadFFmpeg();
   const inputName = 'input.mp4';
@@ -35,7 +46,7 @@ export const trimVideo = async (file: File, startTime: number, endTime: number):
   ]);
   
   const data = await ffmpegInstance.readFile(outputName);
-  const blob = new Blob([data], { type: 'video/mp4' });
+  const blob = createBlobFromData(data as Uint8Array, 'video/mp4');
   return URL.createObjectURL(blob);
 };
 
@@ -54,7 +65,7 @@ export const cropVideo = async (file: File, width: number, height: number): Prom
   ]);
   
   const data = await ffmpegInstance.readFile(outputName);
-  const blob = new Blob([data], { type: 'video/mp4' });
+  const blob = createBlobFromData(data as Uint8Array, 'video/mp4');
   return URL.createObjectURL(blob);
 };
 
@@ -77,7 +88,7 @@ export const changeVideoSpeed = async (file: File, speed: number): Promise<strin
   ]);
   
   const data = await ffmpegInstance.readFile(outputName);
-  const blob = new Blob([data], { type: 'video/mp4' });
+  const blob = createBlobFromData(data as Uint8Array, 'video/mp4');
   return URL.createObjectURL(blob);
 };
 
@@ -98,7 +109,7 @@ export const addVideoFilter = async (file: File, brightness: number, contrast: n
   ]);
   
   const data = await ffmpegInstance.readFile(outputName);
-  const blob = new Blob([data], { type: 'video/mp4' });
+  const blob = createBlobFromData(data as Uint8Array, 'video/mp4');
   return URL.createObjectURL(blob);
 };
 
@@ -117,6 +128,6 @@ export const convertToGif = async (file: File, width: number = 320): Promise<str
   ]);
   
   const data = await ffmpegInstance.readFile(outputName);
-  const blob = new Blob([data], { type: 'image/gif' });
+  const blob = createBlobFromData(data as Uint8Array, 'image/gif');
   return URL.createObjectURL(blob);
 };
