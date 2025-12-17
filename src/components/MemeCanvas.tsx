@@ -73,12 +73,13 @@ const MemeCanvas = forwardRef<HTMLDivElement, MemeCanvasProps>(({
               zIndex: selectedTextId === headerText.id ? 10 : 1,
               fontFamily: 'Impact, Arial, sans-serif',
               fontWeight: 'bold',
-              textAlign: 'center',
+              textAlign: 'left',
               textTransform: 'uppercase',
               lineHeight: 1.1,
               background: 'white',
               width: '100%',
-              padding: '0.5em 0',
+              padding: '0.5em 0.5em',
+              whiteSpace: 'pre-wrap',
               textShadow: headerText.color === '#ffffff' || headerText.color === 'white' 
                 ? '2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000'
                 : 'none'
@@ -120,13 +121,13 @@ const MemeCanvas = forwardRef<HTMLDivElement, MemeCanvasProps>(({
                 fontFamily: field.fontFamily || 'Impact, Arial, sans-serif',
                 fontWeight: 'bold',
                 opacity: field.opacity / 100,
-                transform: `translate(-50%, -50%) rotate(${field.rotation}deg) scale(${field.scale})`,
+                transform: `translate(0%, -50%) rotate(${field.rotation}deg) scale(${field.scale})`,
                 minWidth: '60px',
                 userSelect: 'none',
                 touchAction: 'none',
                 zIndex: selectedTextId === field.id ? 10 : 1,
-                whiteSpace: 'pre',
-                textAlign: 'center',
+                whiteSpace: 'pre-wrap',
+                textAlign: 'left',
                 padding: '4px 8px',
                 textShadow: '2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000',
                 WebkitTextStroke: '1px black'
@@ -245,12 +246,13 @@ const MemeCanvas = forwardRef<HTMLDivElement, MemeCanvasProps>(({
               zIndex: selectedTextId === footerText.id ? 10 : 1,
               fontFamily: 'Impact, Arial, sans-serif',
               fontWeight: 'bold',
-              textAlign: 'center',
+              textAlign: 'left',
               textTransform: 'uppercase',
               lineHeight: 1.1,
               background: 'white',
               width: '100%',
-              padding: '0.5em 0',
+              padding: '0.5em 0.5em',
+              whiteSpace: 'pre-wrap',
               textShadow: footerText.color === '#ffffff' || footerText.color === 'white' 
                 ? '2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000'
                 : 'none'
