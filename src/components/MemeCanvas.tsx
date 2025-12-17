@@ -110,14 +110,15 @@ const MemeCanvas = forwardRef<HTMLDivElement, MemeCanvasProps>(({
               key={field.id}
               data-text-element={field.id}
               data-placeholder={!field.text}
-              className={`absolute cursor-move select-none font-bold text-center px-2 py-1 transition-all duration-300`}
               style={{
+                position: 'absolute',
+                cursor: 'move',
                 left: `${field.x}%`,
                 top: `${field.y}%`,
                 fontSize: `${field.fontSize * CANVAS_CONFIG.textArea.regular.fontSize}px`,
                 color: field.color,
-                fontFamily: field.fontFamily,
-                fontWeight: CANVAS_CONFIG.textArea.regular.fontWeight,
+                fontFamily: field.fontFamily || 'Impact, Arial, sans-serif',
+                fontWeight: 'bold',
                 opacity: field.opacity / 100,
                 transform: `translate(-50%, -50%) rotate(${field.rotation}deg) scale(${field.scale})`,
                 minWidth: '60px',
@@ -125,7 +126,10 @@ const MemeCanvas = forwardRef<HTMLDivElement, MemeCanvasProps>(({
                 touchAction: 'none',
                 zIndex: selectedTextId === field.id ? 10 : 1,
                 whiteSpace: 'pre',
-                textShadow: '2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000'
+                textAlign: 'center',
+                padding: '4px 8px',
+                textShadow: '2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000',
+                WebkitTextStroke: '1px black'
               }}
               onMouseDown={e => onMouseDown(e, field.id, 'text')}
               onTouchStart={e => onTouchStart(e, field.id, 'text')}
