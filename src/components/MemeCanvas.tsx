@@ -80,6 +80,7 @@ const MemeCanvas = forwardRef<HTMLDivElement, MemeCanvasProps>(({
               width: '100%',
               padding: '0.5em 0.5em',
               whiteSpace: 'pre-wrap',
+              WebkitTextStroke: headerText.color === '#ffffff' || headerText.color === 'white' ? '1px black' : 'none',
               textShadow: headerText.color === '#ffffff' || headerText.color === 'white' 
                 ? '2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000'
                 : 'none'
@@ -129,6 +130,7 @@ const MemeCanvas = forwardRef<HTMLDivElement, MemeCanvasProps>(({
                 whiteSpace: 'pre-wrap',
                 textAlign: 'left',
                 padding: '4px 8px',
+                WebkitTextStroke: field.color === '#ffffff' || field.color === 'white' ? '1px black' : 'none',
                 textShadow: field.color === '#ffffff' || field.color === 'white' ? '2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000' : 'none'
               }}
               onMouseDown={e => onMouseDown(e, field.id, 'text')}
@@ -252,6 +254,7 @@ const MemeCanvas = forwardRef<HTMLDivElement, MemeCanvasProps>(({
               width: '100%',
               padding: '0.5em 0.5em',
               whiteSpace: 'pre-wrap',
+              WebkitTextStroke: footerText.color === '#ffffff' || footerText.color === 'white' ? '1px black' : 'none',
               textShadow: footerText.color === '#ffffff' || footerText.color === 'white' 
                 ? '2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000'
                 : 'none'
