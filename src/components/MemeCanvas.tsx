@@ -129,8 +129,7 @@ const MemeCanvas = forwardRef<HTMLDivElement, MemeCanvasProps>(({
                 whiteSpace: 'pre-wrap',
                 textAlign: 'left',
                 padding: '4px 8px',
-                textShadow: '2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000',
-                WebkitTextStroke: '1px black'
+                textShadow: field.color === '#ffffff' || field.color === 'white' ? '2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000' : 'none'
               }}
               onMouseDown={e => onMouseDown(e, field.id, 'text')}
               onTouchStart={e => onTouchStart(e, field.id, 'text')}
