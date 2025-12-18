@@ -36,7 +36,7 @@ export const useMemeEditorLogic = () => {
       x: 50,
       y: 30,
       fontSize: 32,
-      color: "#FFFFFF",
+      color: "#000000",
       fontWeight: "bold",
       fontFamily: "Impact",
       opacity: 100,
