@@ -127,7 +127,7 @@ export const useMemeEditorLogic = () => {
       fontSize: 32,
       color: "#FFFFFF",
       fontWeight: "bold",
-      fontFamily: "Arial",
+      fontFamily: "Impact",
       opacity: 100,
       rotation: 0,
       scale: 1,
