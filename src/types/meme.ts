@@ -38,7 +38,7 @@ export interface LineField {
   type: 'horizontal' | 'vertical';
 }
 
-export type ShapeType = 'line' | 'circle' | 'square' | 'rectangle' | 'triangle' | 'pentagon' | 'custom';
+export type ShapeType = 'line' | 'circle' | 'square' | 'rectangle' | 'triangle' | 'pentagon' | 'star' | 'heart' | 'rounded-rectangle' | 'custom';
 
 export interface ShapeField {
   id: number;

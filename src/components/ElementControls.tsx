@@ -1,19 +1,26 @@
 import { Button } from "@/components/ui/button";
 import { RotateCw, ZoomIn, ZoomOut } from "lucide-react";
 import { TextField, ImageField } from "@/types/meme";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
+
 interface ElementControlsProps {
   selectedText: TextField | undefined;
-  selectedImage: ImageField | undefined;
+  selectedImage: (ImageField & { isLogo?: boolean, borderColor?: string, borderWidth?: number, shadow?: boolean }) | undefined;
   onRotate: () => void;
   onScaleUp: () => void;
   onScaleDown: () => void;
+  onUpdateElement: (updates: Partial<ImageField & { isLogo?: boolean, borderColor?: string, borderWidth?: number, shadow?: boolean }>) => void;
 }
+
 const ElementControls = ({
   selectedText,
   selectedImage,
   onRotate,
   onScaleUp,
-  onScaleDown
+  onScaleDown,
+  onUpdateElement
 }: ElementControlsProps) => {
   return <div className="space-y-2 p-2 sm:p-3 bg-card border border-border rounded-lg">
       <h4 className="font-medium text-card-foreground text-xs sm:text-sm">Element Controls</h4>
@@ -34,6 +41,44 @@ const ElementControls = ({
       <p className="text-xs sm:text-sm text-muted-foreground text-center">
         {selectedText ? `Selected: Text Element` : selectedImage ? `Selected: Image Element` : 'Transform tools available'}
       </p>
+      {selectedImage?.isLogo && (
+        <div className="space-y-4 pt-4 border-t border-border">
+          <h5 className="font-medium text-card-foreground text-xs sm:text-sm">Logo Controls</h5>
+          <div>
+            <label className="text-sm text-gray-400">Border Color</label>
+            <Input
+              type="color"
+              value={selectedImage.borderColor || '#000000'}
+              onChange={(e) => onUpdateElement({ borderColor: e.target.value })}
+              className="bg-gray-700 border-gray-600 mt-1"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-gray-400">Border Width</label>
+            <Slider
+              value={[selectedImage.borderWidth || 0]}
+              onValueChange={([value]) => onUpdateElement({ borderWidth: value })}
+              max={20}
+              min={0}
+              step={1}
+              className="w-full mt-2"
+            />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="shadow"
+              checked={selectedImage.shadow}
+              onCheckedChange={(checked) => onUpdateElement({ shadow: !!checked })}
+            />
+            <label
+              htmlFor="shadow"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Add Drop Shadow
+            </label>
+          </div>
+        </div>
+      )}
     </div>;
 };
 export default ElementControls;
