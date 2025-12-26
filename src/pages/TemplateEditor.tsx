@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
-import { Upload, Download, Share, X, Plus, Square, ArrowLeft, Minus, Circle, Triangle, Pentagon, Shapes } from "lucide-react";
+import { Upload, Download, Share, X, Plus, Square, ArrowLeft, Minus, Circle, Triangle, Pentagon, Shapes, Star, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import HamburgerMenu from "@/components/HamburgerMenu";
@@ -15,6 +15,7 @@ import UndoRedoControls from "@/components/UndoRedoControls";
 import TemplateLineControls from "@/components/TemplateLineControls";
 import { captureMemeContainer } from "@/utils/memeDownloadUtils";
 import { ShapeType } from "@/types/meme";
+import { CircleLogoUploader } from "@/components/CircleLogoUploader";
 
 interface TemplateElement {
   id: number;
@@ -36,6 +37,11 @@ interface TemplateElement {
   shapeType?: ShapeType;
   fillColor?: string;
   strokeWidth?: number;
+  // Logo-specific properties
+  borderColor?: string;
+  borderWidth?: number;
+  shadow?: boolean;
+  isLogo?: boolean;
 }
 
 interface Template {
@@ -54,6 +60,7 @@ const TemplateEditor = () => {
   const [showReplaceDialog, setShowReplaceDialog] = useState(false);
   const [showCropDialog, setShowCropDialog] = useState(false);
   const [showShapesDialog, setShowShapesDialog] = useState(false);
+  const [showLogoUploader, setShowLogoUploader] = useState(false);
   const [editingText, setEditingText] = useState<string>("");
   const [editingTextIndex, setEditingTextIndex] = useState<number | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -288,6 +295,29 @@ const TemplateEditor = () => {
       description: `${shapeType.charAt(0).toUpperCase() + shapeType.slice(1)} shape has been added to the canvas.`
     });
   };
+
+  const handleLogoUpload = (logoUrl: string) => {
+    const newElement: TemplateElement = {
+      id: Date.now(),
+      type: 'image',
+      x: 150,
+      y: 150,
+      width: 100,
+      height: 100,
+      content: logoUrl,
+      isLogo: true,
+      borderColor: '#000000',
+      borderWidth: 2,
+      shadow: false,
+    };
+    setCustomElements(prev => [...prev, newElement]);
+    setSelectedElement(newElement.id);
+    saveToHistory();
+    toast({
+      title: "Logo added!",
+      description: "Your logo has been added to the canvas."
+    });
+  }
   const updateElement = (id: number, updates: Partial<TemplateElement>) => {
     setCustomElements(prev => prev.map(el => el.id === id ? {
       ...el,
@@ -746,7 +776,11 @@ const TemplateEditor = () => {
                         MozUserSelect: 'none',
                         msUserSelect: 'none'
                       }} onMouseDown={e => handleMouseDown(e, element.id)} onTouchStart={e => handleTouchStart(e, element.id)}>
-                                 {element.type === 'image' ? element.content ? <img src={element.content} alt="Element" className="w-full h-full object-cover rounded pointer-events-none" draggable={false} /> : <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center text-gray-500 pointer-events-none">
+                                 {element.type === 'image' ? element.content ? <img src={element.content} alt="Element" className="w-full h-full object-cover pointer-events-none" draggable={false} style={{
+                                        borderRadius: element.isLogo ? '50%' : '0',
+                                        border: element.isLogo ? `${element.borderWidth || 0}px solid ${element.borderColor || 'transparent'}` : 'none',
+                                        boxShadow: element.isLogo && element.shadow ? '0 0 10px rgba(0,0,0,0.5)' : 'none',
+                                      }} /> : <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center text-gray-500 pointer-events-none">
                                        <Upload className="w-8 h-8" />
                                      </div> : element.type === 'text' ? <div className="w-full h-full flex items-center justify-center text-center font-bold pointer-events-none" style={{
                           fontSize: element.fontSize,
@@ -846,7 +880,7 @@ const TemplateEditor = () => {
                                         strokeWidth={shape.strokeWidth || 2} 
                                       />
                                     )}
-                                    {(shape.shapeType === 'square' || shape.shapeType === 'rectangle') && (
+                                    {(shape.shapeType === 'square' || shape.shapeType === 'rectangle' || shape.shapeType === 'rounded-rectangle') && (
                                       <rect 
                                         x={(shape.strokeWidth || 2) / 2} 
                                         y={(shape.strokeWidth || 2) / 2} 
@@ -854,7 +888,8 @@ const TemplateEditor = () => {
                                         height={(shape.height || 80) - (shape.strokeWidth || 2)} 
                                         fill={shape.fillColor || 'transparent'} 
                                         stroke={shape.color || '#000000'} 
-                                        strokeWidth={shape.strokeWidth || 2} 
+                                        strokeWidth={shape.strokeWidth || 2}
+                                        rx={shape.shapeType === 'rounded-rectangle' ? 10 : 0}
                                       />
                                     )}
                                     {shape.shapeType === 'triangle' && (
@@ -881,6 +916,46 @@ const TemplateEditor = () => {
                                           fill={shape.fillColor || 'transparent'} 
                                           stroke={shape.color || '#000000'} 
                                           strokeWidth={shape.strokeWidth || 2} 
+                                        />
+                                      );
+                                    })()}
+                                    {shape.shapeType === 'star' && (() => {
+                                      const w = shape.width || 80;
+                                      const h = shape.height || 80;
+                                      const cx = w / 2;
+                                      const cy = h / 2;
+                                      const outerRadius = Math.min(w, h) / 2 - (shape.strokeWidth || 2);
+                                      const innerRadius = outerRadius / 2;
+                                      let points = '';
+                                      for (let i = 0; i < 10; i++) {
+                                        const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                                        const angle = (i * 36 - 90) * (Math.PI / 180);
+                                        points += `${cx + radius * Math.cos(angle)},${cy + radius * Math.sin(angle)} `;
+                                      }
+                                      return (
+                                        <polygon
+                                          points={points.trim()}
+                                          fill={shape.fillColor || 'transparent'}
+                                          stroke={shape.color || '#000000'}
+                                          strokeWidth={shape.strokeWidth || 2}
+                                        />
+                                      );
+                                    })()}
+                                    {shape.shapeType === 'heart' && (() => {
+                                      const w = shape.width || 80;
+                                      const h = shape.height || 80;
+                                      const sw = shape.strokeWidth || 2;
+                                      const path = `
+                                        M ${w / 2},${h * 0.3}
+                                        C ${w * 0.2},${h * 0.1} ${-w * 0.2},${h * 0.6} ${w / 2},${h * 0.9}
+                                        C ${w * 1.2},${h * 0.6} ${w * 0.8},${h * 0.1} ${w / 2},${h * 0.3}
+                                        Z`;
+                                      return (
+                                        <path
+                                          d={path}
+                                          fill={shape.fillColor || 'transparent'}
+                                          stroke={shape.color || '#000000'}
+                                          strokeWidth={sw}
                                         />
                                       );
                                     })()}
@@ -922,7 +997,8 @@ const TemplateEditor = () => {
                       customElements.find(el => el.id === selectedElement && el.type === 'image') as any : undefined} 
                     onRotate={rotateElement} 
                     onScaleUp={scaleElementUp} 
-                    onScaleDown={scaleElementDown} 
+                    onScaleDown={scaleElementDown}
+                    onUpdateElement={(updates) => selectedElement && updateElement(selectedElement, updates)}
                   />
                   
                   <Card className="bg-gray-800/50 border-gray-700">
@@ -952,6 +1028,10 @@ const TemplateEditor = () => {
                          <Shapes className="w-4 h-4 mr-2" />
                          Add Shapes
                        </Button>
+                       <Button onClick={() => setShowLogoUploader(true)} className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-xs sm:text-sm py-3 sm:py-2 min-h-[44px] sm:min-h-auto">
+                          <Circle className="w-4 h-4 mr-2" />
+                          Add Logo
+                        </Button>
                     </CardContent>
                   </Card>
 
@@ -1203,6 +1283,9 @@ const TemplateEditor = () => {
                     { type: 'rectangle' as ShapeType, name: 'Rectangle', icon: <div className="w-10 h-6 border-2 border-current rounded-sm" /> },
                     { type: 'triangle' as ShapeType, name: 'Triangle', icon: <Triangle className="w-8 h-8" /> },
                     { type: 'pentagon' as ShapeType, name: 'Pentagon', icon: <Pentagon className="w-8 h-8" /> },
+                    { type: 'star' as ShapeType, name: 'Star', icon: <Star className="w-8 h-8" /> },
+                    { type: 'heart' as ShapeType, name: 'Heart', icon: <Heart className="w-8 h-8" /> },
+                    { type: 'rounded-rectangle' as ShapeType, name: 'Rounded', icon: <div className="w-10 h-6 border-2 border-current rounded-md" /> },
                   ].map((shape) => (
                     <button
                       key={shape.type}
@@ -1305,6 +1388,25 @@ const TemplateEditor = () => {
                             strokeWidth={shapeStrokeWidth} 
                           />
                         )}
+                        {selectedShapeType === 'star' && (
+                          <polygon
+                            points="50,5 61.8,35.3 95.1,35.3 68.2,57.2 79.4,87.6 50,65.8 20.6,87.6 31.8,57.2 4.9,35.3 38.2,35.3"
+                            fill={shapeFillColor}
+                            stroke={shapeStrokeColor}
+                            strokeWidth={shapeStrokeWidth}
+                          />
+                        )}
+                        {selectedShapeType === 'heart' && (
+                          <path
+                            d="M 50,25 C 25,0 0,25 25,50 L 50,75 L 75,50 C 100,25 75,0 50,25 Z"
+                            fill={shapeFillColor}
+                            stroke={shapeStrokeColor}
+                            strokeWidth={shapeStrokeWidth}
+                          />
+                        )}
+                        {selectedShapeType === 'rounded-rectangle' && (
+                            <rect x="10" y="20" width="80" height="40" rx="10" fill={shapeFillColor} stroke={shapeStrokeColor} strokeWidth={shapeStrokeWidth} />
+                        )}
                       </svg>
                     </div>
                   </div>
@@ -1329,6 +1431,12 @@ const TemplateEditor = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        <CircleLogoUploader
+          open={showLogoUploader}
+          onOpenChange={setShowLogoUploader}
+          onLogoUpload={handleLogoUpload}
+        />
       </main>
     </div>;
 };
