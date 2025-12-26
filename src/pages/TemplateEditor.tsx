@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
-import { Upload, Download, Share, X, Plus, Square, ArrowLeft, Minus } from "lucide-react";
+import { Upload, Download, Share, X, Plus, Square, ArrowLeft, Minus, Circle, Triangle, Pentagon, Shapes } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import HamburgerMenu from "@/components/HamburgerMenu";
@@ -14,9 +14,11 @@ import ElementControls from "@/components/ElementControls";
 import UndoRedoControls from "@/components/UndoRedoControls";
 import TemplateLineControls from "@/components/TemplateLineControls";
 import { captureMemeContainer } from "@/utils/memeDownloadUtils";
+import { ShapeType } from "@/types/meme";
+
 interface TemplateElement {
   id: number;
-  type: 'text' | 'image' | 'line';
+  type: 'text' | 'image' | 'line' | 'shape';
   x: number;
   y: number;
   width?: number;
@@ -30,7 +32,12 @@ interface TemplateElement {
   y2?: number;
   thickness?: number;
   lineType?: 'horizontal' | 'vertical';
+  // Shape-specific properties
+  shapeType?: ShapeType;
+  fillColor?: string;
+  strokeWidth?: number;
 }
+
 interface Template {
   id: number;
   title: string;
@@ -40,11 +47,13 @@ interface Template {
   layout?: 'single' | 'double' | 'triple' | 'quad' | 'grid';
   elements?: TemplateElement[];
 }
+
 const TemplateEditor = () => {
   const navigate = useNavigate();
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [showReplaceDialog, setShowReplaceDialog] = useState(false);
   const [showCropDialog, setShowCropDialog] = useState(false);
+  const [showShapesDialog, setShowShapesDialog] = useState(false);
   const [editingText, setEditingText] = useState<string>("");
   const [editingTextIndex, setEditingTextIndex] = useState<number | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -59,6 +68,13 @@ const TemplateEditor = () => {
   });
   const [canvasBackground, setCanvasBackground] = useState('#FFFFFF');
   const [canvasBackgroundType, setCanvasBackgroundType] = useState<'color' | 'image'>('color');
+  
+  // Shape dialog state
+  const [selectedShapeType, setSelectedShapeType] = useState<ShapeType | null>(null);
+  const [shapeStrokeColor, setShapeStrokeColor] = useState("#000000");
+  const [shapeFillColor, setShapeFillColor] = useState("#ffffff");
+  const [shapeStrokeWidth, setShapeStrokeWidth] = useState(2);
+  
   const canvasRef = useRef<HTMLDivElement>(null);
   const {
     toast
@@ -246,6 +262,31 @@ const TemplateEditor = () => {
     setCustomElements(prev => [...prev, newElement]);
     setSelectedElement(newElement.id);
     saveToHistory();
+  };
+  
+  const addShapeElement = (shapeType: ShapeType, color: string, fillColor: string, strokeWidth: number) => {
+    const newElement: TemplateElement = {
+      id: Date.now(),
+      type: 'shape',
+      x: 150,
+      y: 150,
+      width: shapeType === 'line' ? 100 : 80,
+      height: shapeType === 'line' ? 10 : 80,
+      content: '',
+      color: color,
+      fillColor: fillColor,
+      strokeWidth: strokeWidth,
+      shapeType: shapeType
+    };
+    setCustomElements(prev => [...prev, newElement]);
+    setSelectedElement(newElement.id);
+    setShowShapesDialog(false);
+    setSelectedShapeType(null);
+    saveToHistory();
+    toast({
+      title: "Shape added!",
+      description: `${shapeType.charAt(0).toUpperCase() + shapeType.slice(1)} shape has been added to the canvas.`
+    });
   };
   const updateElement = (id: number, updates: Partial<TemplateElement>) => {
     setCustomElements(prev => prev.map(el => el.id === id ? {
@@ -758,6 +799,97 @@ const TemplateEditor = () => {
                           }
                         }} />
                                  </svg>)}
+                              
+                              {/* Render shapes */}
+                              {customElements.filter(element => element.type === 'shape').map(shape => (
+                                <div
+                                  key={shape.id}
+                                  className={`absolute cursor-move ${selectedElement === shape.id ? 'z-10' : 'z-5'}`}
+                                  style={{
+                                    left: shape.x,
+                                    top: shape.y,
+                                    width: shape.width,
+                                    height: shape.height,
+                                    touchAction: 'none',
+                                    userSelect: 'none'
+                                  }}
+                                  onMouseDown={e => handleMouseDown(e, shape.id)}
+                                  onTouchStart={e => handleTouchStart(e, shape.id)}
+                                >
+                                  <svg 
+                                    width={shape.width} 
+                                    height={shape.height} 
+                                    viewBox={`0 0 ${shape.width} ${shape.height}`}
+                                    className="overflow-visible"
+                                    style={{
+                                      filter: selectedElement === shape.id ? 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.5))' : 'none'
+                                    }}
+                                  >
+                                    {shape.shapeType === 'line' && (
+                                      <line 
+                                        x1="0" 
+                                        y1={(shape.height || 10) / 2} 
+                                        x2={shape.width} 
+                                        y2={(shape.height || 10) / 2} 
+                                        stroke={shape.color || '#000000'} 
+                                        strokeWidth={shape.strokeWidth || 2} 
+                                      />
+                                    )}
+                                    {shape.shapeType === 'circle' && (
+                                      <ellipse 
+                                        cx={(shape.width || 80) / 2} 
+                                        cy={(shape.height || 80) / 2} 
+                                        rx={(shape.width || 80) / 2 - (shape.strokeWidth || 2)} 
+                                        ry={(shape.height || 80) / 2 - (shape.strokeWidth || 2)} 
+                                        fill={shape.fillColor || 'transparent'} 
+                                        stroke={shape.color || '#000000'} 
+                                        strokeWidth={shape.strokeWidth || 2} 
+                                      />
+                                    )}
+                                    {(shape.shapeType === 'square' || shape.shapeType === 'rectangle') && (
+                                      <rect 
+                                        x={(shape.strokeWidth || 2) / 2} 
+                                        y={(shape.strokeWidth || 2) / 2} 
+                                        width={(shape.width || 80) - (shape.strokeWidth || 2)} 
+                                        height={(shape.height || 80) - (shape.strokeWidth || 2)} 
+                                        fill={shape.fillColor || 'transparent'} 
+                                        stroke={shape.color || '#000000'} 
+                                        strokeWidth={shape.strokeWidth || 2} 
+                                      />
+                                    )}
+                                    {shape.shapeType === 'triangle' && (
+                                      <polygon 
+                                        points={`${(shape.width || 80) / 2},${shape.strokeWidth || 2} ${(shape.width || 80) - (shape.strokeWidth || 2)},${(shape.height || 80) - (shape.strokeWidth || 2)} ${shape.strokeWidth || 2},${(shape.height || 80) - (shape.strokeWidth || 2)}`}
+                                        fill={shape.fillColor || 'transparent'} 
+                                        stroke={shape.color || '#000000'} 
+                                        strokeWidth={shape.strokeWidth || 2} 
+                                      />
+                                    )}
+                                    {shape.shapeType === 'pentagon' && (() => {
+                                      const w = shape.width || 80;
+                                      const h = shape.height || 80;
+                                      const cx = w / 2;
+                                      const cy = h / 2;
+                                      const r = Math.min(w, h) / 2 - (shape.strokeWidth || 2);
+                                      const points = Array.from({ length: 5 }, (_, i) => {
+                                        const angle = (i * 72 - 90) * (Math.PI / 180);
+                                        return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
+                                      }).join(' ');
+                                      return (
+                                        <polygon 
+                                          points={points}
+                                          fill={shape.fillColor || 'transparent'} 
+                                          stroke={shape.color || '#000000'} 
+                                          strokeWidth={shape.strokeWidth || 2} 
+                                        />
+                                      );
+                                    })()}
+                                  </svg>
+                                  {selectedElement === shape.id && (
+                                    <div className="absolute inset-0 ring-2 ring-blue-400 ring-opacity-50 pointer-events-none rounded" />
+                                  )}
+                                </div>
+                              ))}
                           </>}
                       </div>
 
@@ -816,6 +948,10 @@ const TemplateEditor = () => {
                            V-Line
                          </Button>
                        </div>
+                       <Button onClick={() => setShowShapesDialog(true)} className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-xs sm:text-sm py-3 sm:py-2 min-h-[44px] sm:min-h-auto">
+                         <Shapes className="w-4 h-4 mr-2" />
+                         Add Shapes
+                       </Button>
                     </CardContent>
                   </Card>
 
@@ -921,6 +1057,42 @@ const TemplateEditor = () => {
                           })} className="bg-gray-700 border-gray-600 mt-1" />
                                    </div>
                                  </>}
+                               {element.type === 'shape' && <>
+                                   <div>
+                                     <label className="text-sm text-gray-400">Shape Type</label>
+                                     <p className="text-white mt-1 capitalize">{element.shapeType}</p>
+                                   </div>
+                                   <div>
+                                     <label className="text-sm text-gray-400">Width</label>
+                                     <Slider value={[element.width || 80]} onValueChange={([value]) => updateElement(element.id, {
+                             width: value
+                           })} max={300} min={20} step={5} className="w-full mt-2" />
+                                   </div>
+                                   <div>
+                                     <label className="text-sm text-gray-400">Height</label>
+                                     <Slider value={[element.height || 80]} onValueChange={([value]) => updateElement(element.id, {
+                             height: value
+                           })} max={300} min={20} step={5} className="w-full mt-2" />
+                                   </div>
+                                   <div>
+                                     <label className="text-sm text-gray-400">Stroke Color</label>
+                                     <Input type="color" value={element.color || '#000000'} onChange={e => updateElement(element.id, {
+                             color: e.target.value
+                           })} className="bg-gray-700 border-gray-600 mt-1" />
+                                   </div>
+                                   <div>
+                                     <label className="text-sm text-gray-400">Fill Color</label>
+                                     <Input type="color" value={element.fillColor || '#ffffff'} onChange={e => updateElement(element.id, {
+                             fillColor: e.target.value
+                           })} className="bg-gray-700 border-gray-600 mt-1" />
+                                   </div>
+                                   <div>
+                                     <label className="text-sm text-gray-400">Stroke Width: {element.strokeWidth || 2}px</label>
+                                     <Slider value={[element.strokeWidth || 2]} onValueChange={([value]) => updateElement(element.id, {
+                             strokeWidth: value
+                           })} max={10} min={1} step={1} className="w-full mt-2" />
+                                   </div>
+                                 </>}
                               <Button onClick={() => {
                         setCustomElements(prev => prev.filter(el => el.id !== element.id));
                         setSelectedElement(null);
@@ -1005,6 +1177,154 @@ const TemplateEditor = () => {
                 <Button variant="outline" onClick={() => setShowCropDialog(false)} className="border-gray-600 text-gray-300">
                   Cancel
                 </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Shapes Dialog */}
+        <Dialog open={showShapesDialog} onOpenChange={setShowShapesDialog}>
+          <DialogContent className="bg-gray-800 border-gray-700 max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-white flex items-center gap-2">
+                <Shapes className="w-5 h-5 text-purple-400" />
+                Add Shapes
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6">
+              {/* Shape Selection Grid */}
+              <div>
+                <h4 className="font-medium mb-3 text-white">Choose a Shape</h4>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                  {[
+                    { type: 'line' as ShapeType, name: 'Line', icon: <Minus className="w-8 h-8" /> },
+                    { type: 'circle' as ShapeType, name: 'Circle', icon: <Circle className="w-8 h-8" /> },
+                    { type: 'square' as ShapeType, name: 'Square', icon: <Square className="w-8 h-8" /> },
+                    { type: 'rectangle' as ShapeType, name: 'Rectangle', icon: <div className="w-10 h-6 border-2 border-current rounded-sm" /> },
+                    { type: 'triangle' as ShapeType, name: 'Triangle', icon: <Triangle className="w-8 h-8" /> },
+                    { type: 'pentagon' as ShapeType, name: 'Pentagon', icon: <Pentagon className="w-8 h-8" /> },
+                  ].map((shape) => (
+                    <button
+                      key={shape.type}
+                      onClick={() => setSelectedShapeType(shape.type)}
+                      onDoubleClick={() => addShapeElement(shape.type, shapeStrokeColor, shapeFillColor, shapeStrokeWidth)}
+                      className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all hover:bg-gray-700 text-white ${
+                        selectedShapeType === shape.type 
+                          ? 'border-purple-500 bg-purple-900/30' 
+                          : 'border-gray-600'
+                      }`}
+                    >
+                      {shape.icon}
+                      <span className="text-xs mt-2">{shape.name}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">Click to select, double-click to quick add</p>
+              </div>
+
+              {/* Shape Customization */}
+              {selectedShapeType && (
+                <div className="space-y-4 border-t border-gray-600 pt-4">
+                  <h4 className="font-medium text-white">Customize Shape</h4>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm text-gray-300">Stroke Color</label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={shapeStrokeColor}
+                          onChange={(e) => setShapeStrokeColor(e.target.value)}
+                          className="w-12 h-10 p-1 cursor-pointer bg-gray-700 border-gray-600"
+                        />
+                        <Input
+                          type="text"
+                          value={shapeStrokeColor}
+                          onChange={(e) => setShapeStrokeColor(e.target.value)}
+                          className="flex-1 bg-gray-700 border-gray-600 text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm text-gray-300">Fill Color</label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={shapeFillColor}
+                          onChange={(e) => setShapeFillColor(e.target.value)}
+                          className="w-12 h-10 p-1 cursor-pointer bg-gray-700 border-gray-600"
+                        />
+                        <Input
+                          type="text"
+                          value={shapeFillColor}
+                          onChange={(e) => setShapeFillColor(e.target.value)}
+                          className="flex-1 bg-gray-700 border-gray-600 text-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm text-gray-300">Stroke Width: {shapeStrokeWidth}px</label>
+                    <Slider
+                      value={[shapeStrokeWidth]}
+                      onValueChange={(value) => setShapeStrokeWidth(value[0])}
+                      min={1}
+                      max={10}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Preview */}
+                  <div className="border border-gray-600 rounded-lg p-4 bg-gray-900/50">
+                    <h5 className="text-sm font-medium mb-2 text-white">Preview</h5>
+                    <div className="flex items-center justify-center h-24 bg-white rounded">
+                      <svg width="100" height="80" viewBox="0 0 100 80">
+                        {selectedShapeType === 'line' && (
+                          <line x1="10" y1="40" x2="90" y2="40" stroke={shapeStrokeColor} strokeWidth={shapeStrokeWidth} />
+                        )}
+                        {selectedShapeType === 'circle' && (
+                          <circle cx="50" cy="40" r="30" fill={shapeFillColor} stroke={shapeStrokeColor} strokeWidth={shapeStrokeWidth} />
+                        )}
+                        {selectedShapeType === 'square' && (
+                          <rect x="20" y="10" width="60" height="60" fill={shapeFillColor} stroke={shapeStrokeColor} strokeWidth={shapeStrokeWidth} />
+                        )}
+                        {selectedShapeType === 'rectangle' && (
+                          <rect x="10" y="20" width="80" height="40" fill={shapeFillColor} stroke={shapeStrokeColor} strokeWidth={shapeStrokeWidth} />
+                        )}
+                        {selectedShapeType === 'triangle' && (
+                          <polygon points="50,5 90,75 10,75" fill={shapeFillColor} stroke={shapeStrokeColor} strokeWidth={shapeStrokeWidth} />
+                        )}
+                        {selectedShapeType === 'pentagon' && (
+                          <polygon 
+                            points="50,5 95,32 77,75 23,75 5,32" 
+                            fill={shapeFillColor} 
+                            stroke={shapeStrokeColor} 
+                            strokeWidth={shapeStrokeWidth} 
+                          />
+                        )}
+                      </svg>
+                    </div>
+                  </div>
+
+                  <Button 
+                    onClick={() => addShapeElement(selectedShapeType, shapeStrokeColor, shapeFillColor, shapeStrokeWidth)}
+                    className="w-full bg-purple-500 hover:bg-purple-600"
+                  >
+                    Add {selectedShapeType.charAt(0).toUpperCase() + selectedShapeType.slice(1)} to Template
+                  </Button>
+                </div>
+              )}
+
+              {/* Custom Shape Creator Info */}
+              <div className="border-t border-gray-600 pt-4">
+                <h4 className="font-medium mb-2 text-white">Create Custom Shapes</h4>
+                <p className="text-sm text-gray-400">
+                  After adding a shape, you can drag it to position, resize using the controls, 
+                  and combine multiple shapes to create complex graphics!
+                </p>
               </div>
             </div>
           </DialogContent>
