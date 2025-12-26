@@ -37,3 +37,22 @@ export interface LineField {
   opacity: number;
   type: 'horizontal' | 'vertical';
 }
+
+export type ShapeType = 'line' | 'circle' | 'square' | 'rectangle' | 'triangle' | 'pentagon' | 'custom';
+
+export interface ShapeField {
+  id: number;
+  type: ShapeType;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+  fillColor: string;
+  strokeWidth: number;
+  opacity: number;
+  rotation: number;
+  scale: number;
+  // For custom shapes - array of points
+  points?: { x: number; y: number }[];
+}

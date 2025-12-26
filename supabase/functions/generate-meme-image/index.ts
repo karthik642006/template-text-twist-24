@@ -54,13 +54,14 @@ serve(async (req) => {
 
     for (const apiKey of apiKeys) {
       try {
-        imageUrl = await generateImageWithPollination(enhancedPrompt, apiKey)
+        imageUrl = await generateImageWithPollination(enhancedPrompt, apiKey as string)
         if (imageUrl) {
           console.log("Successfully generated image:", imageUrl)
           break
         }
-      } catch (error) {
-        console.log(`API key failed, trying next:`, error.message)
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        console.log(`API key failed, trying next:`, errorMessage)
         lastError = error
         continue
       }
@@ -82,10 +83,11 @@ serve(async (req) => {
       }
     )
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in generate-meme-image:', error)
+    const errorMessage = error instanceof Error ? error.message : "Failed to generate image"
     return new Response(
-      JSON.stringify({ error: error.message || "Failed to generate image" }),
+      JSON.stringify({ error: errorMessage }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

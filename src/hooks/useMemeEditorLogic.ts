@@ -1,18 +1,18 @@
 
-import { useState, useRef, useEffect } from "react";
-import { TextField, ImageField, LineField } from "@/types/meme";
+import { useState, useEffect } from "react";
+import { TextField, ImageField, LineField, ShapeField, ShapeType } from "@/types/meme";
 import { toast } from "@/hooks/use-toast";
 
 export const useMemeEditorLogic = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [draggedElementId, setDraggedElementId] = useState<number | null>(null);
-  const [draggedElementType, setDraggedElementType] = useState<'text' | 'image' | 'line' | null>(null);
+  const [draggedElementType, setDraggedElementType] = useState<'text' | 'image' | 'line' | 'shape' | null>(null);
   const [imageStyle, setImageStyle] = useState<string>("");
   const [selectedElementTimeout, setSelectedElementTimeout] = useState<NodeJS.Timeout | null>(null);
   
   // History for undo/redo
-  const [history, setHistory] = useState<{ textFields: TextField[]; imageFields: ImageField[]; lineFields: LineField[] }[]>([]);
+  const [history, setHistory] = useState<{ textFields: TextField[]; imageFields: ImageField[]; lineFields: LineField[]; shapeFields: ShapeField[] }[]>([]);
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1);
 
   const [textFields, setTextFields] = useState<TextField[]>([
@@ -62,14 +62,16 @@ export const useMemeEditorLogic = () => {
 
   const [imageFields, setImageFields] = useState<ImageField[]>([]);
   const [lineFields, setLineFields] = useState<LineField[]>([]);
+  const [shapeFields, setShapeFields] = useState<ShapeField[]>([]);
   const [selectedTextId, setSelectedTextId] = useState(0);
   const [selectedImageId, setSelectedImageId] = useState<number | null>(null);
   const [selectedLineId, setSelectedLineId] = useState<number | null>(null);
+  const [selectedShapeId, setSelectedShapeId] = useState<number | null>(null);
   const [templateImage, setTemplateImage] = useState("/lovable-uploads/b545e16c-6275-4ed7-85e5-e200400ce2d2.png");
 
   // Auto-hide selection after 3 seconds
   useEffect(() => {
-    if (selectedTextId || selectedImageId || selectedLineId) {
+    if (selectedTextId || selectedImageId || selectedLineId || selectedShapeId) {
       if (selectedElementTimeout) {
         clearTimeout(selectedElementTimeout);
       }
@@ -77,6 +79,7 @@ export const useMemeEditorLogic = () => {
         setSelectedTextId(0);
         setSelectedImageId(null);
         setSelectedLineId(null);
+        setSelectedShapeId(null);
       }, 3000);
       setSelectedElementTimeout(timeout);
     }
@@ -85,7 +88,7 @@ export const useMemeEditorLogic = () => {
         clearTimeout(selectedElementTimeout);
       }
     };
-  }, [selectedTextId, selectedImageId, selectedLineId]);
+  }, [selectedTextId, selectedImageId, selectedLineId, selectedShapeId]);
 
   // Load template from localStorage
   useEffect(() => {
@@ -211,9 +214,53 @@ export const useMemeEditorLogic = () => {
     }
   };
 
+  // Shape field functions
+  const addShapeField = (type: ShapeType, color: string, fillColor: string, strokeWidth: number) => {
+    const newId = Math.max(...shapeFields.map(f => f.id), ...lineFields.map(f => f.id), ...textFields.map(f => f.id), ...imageFields.map(f => f.id), 0) + 1;
+    
+    const defaultSizes: Record<ShapeType, { width: number; height: number }> = {
+      'line': { width: 100, height: 4 },
+      'circle': { width: 80, height: 80 },
+      'square': { width: 80, height: 80 },
+      'rectangle': { width: 120, height: 60 },
+      'triangle': { width: 80, height: 70 },
+      'pentagon': { width: 80, height: 80 },
+      'custom': { width: 100, height: 100 }
+    };
+
+    const size = defaultSizes[type] || { width: 80, height: 80 };
+
+    setShapeFields([...shapeFields, {
+      id: newId,
+      type,
+      x: 50,
+      y: 50,
+      width: size.width,
+      height: size.height,
+      color,
+      fillColor,
+      strokeWidth,
+      opacity: 100,
+      rotation: 0,
+      scale: 1
+    }]);
+    setSelectedShapeId(newId);
+  };
+
+  const updateShapeField = (id: number, updates: Partial<ShapeField>) => {
+    setShapeFields(prev => prev.map(field => field.id === id ? { ...field, ...updates } : field));
+  };
+
+  const removeShapeField = (id: number) => {
+    setShapeFields(prev => prev.filter(field => field.id !== id));
+    if (selectedShapeId === id) {
+      setSelectedShapeId(null);
+    }
+  };
+
   // Save state to history
   const saveToHistory = () => {
-    const newState = { textFields, imageFields, lineFields };
+    const newState = { textFields, imageFields, lineFields, shapeFields };
     const newHistory = history.slice(0, currentHistoryIndex + 1);
     newHistory.push(newState);
     setHistory(newHistory);
@@ -228,6 +275,7 @@ export const useMemeEditorLogic = () => {
       setTextFields(state.textFields);
       setImageFields(state.imageFields);
       setLineFields(state.lineFields);
+      setShapeFields(state.shapeFields || []);
       setCurrentHistoryIndex(newIndex);
     }
   };
@@ -240,6 +288,7 @@ export const useMemeEditorLogic = () => {
       setTextFields(state.textFields);
       setImageFields(state.imageFields);
       setLineFields(state.lineFields);
+      setShapeFields(state.shapeFields || []);
       setCurrentHistoryIndex(newIndex);
     }
   };
@@ -251,7 +300,7 @@ export const useMemeEditorLogic = () => {
     }
   }, []);
 
-  const handleMouseDown = (e: React.MouseEvent, elementId: number, elementType: 'text' | 'image' | 'line') => {
+  const handleMouseDown = (e: React.MouseEvent, elementId: number, elementType: 'text' | 'image' | 'line' | 'shape') => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
@@ -261,18 +310,25 @@ export const useMemeEditorLogic = () => {
       setSelectedTextId(elementId);
       setSelectedImageId(null);
       setSelectedLineId(null);
+      setSelectedShapeId(null);
     } else if (elementType === 'image') {
       setSelectedImageId(elementId);
       setSelectedTextId(0);
       setSelectedLineId(null);
+      setSelectedShapeId(null);
     } else if (elementType === 'line') {
       setSelectedLineId(elementId);
       setSelectedTextId(0);
       setSelectedImageId(null);
+      setSelectedShapeId(null);
+    } else if (elementType === 'shape') {
+      setSelectedShapeId(elementId);
+      setSelectedTextId(0);
+      setSelectedImageId(null);
+      setSelectedLineId(null);
     }
     const containerRef = document.querySelector('[data-meme-container]');
     if (containerRef) {
-      const containerRect = containerRef.getBoundingClientRect();
       const elementRect = e.currentTarget.getBoundingClientRect();
       setDragOffset({
         x: e.clientX - elementRect.left - elementRect.width / 2,
@@ -281,7 +337,7 @@ export const useMemeEditorLogic = () => {
     }
   };
 
-  const handleTouchStart = (e: React.TouchEvent, elementId: number, elementType: 'text' | 'image' | 'line') => {
+  const handleTouchStart = (e: React.TouchEvent, elementId: number, elementType: 'text' | 'image' | 'line' | 'shape') => {
     e.preventDefault();
     e.stopPropagation();
     const touch = e.touches[0];
@@ -292,18 +348,25 @@ export const useMemeEditorLogic = () => {
       setSelectedTextId(elementId);
       setSelectedImageId(null);
       setSelectedLineId(null);
+      setSelectedShapeId(null);
     } else if (elementType === 'image') {
       setSelectedImageId(elementId);
       setSelectedTextId(0);
       setSelectedLineId(null);
+      setSelectedShapeId(null);
     } else if (elementType === 'line') {
       setSelectedLineId(elementId);
       setSelectedTextId(0);
       setSelectedImageId(null);
+      setSelectedShapeId(null);
+    } else if (elementType === 'shape') {
+      setSelectedShapeId(elementId);
+      setSelectedTextId(0);
+      setSelectedImageId(null);
+      setSelectedLineId(null);
     }
     const containerRef = document.querySelector('[data-meme-container]');
     if (containerRef) {
-      const containerRect = containerRef.getBoundingClientRect();
       const elementRect = e.currentTarget.getBoundingClientRect();
       setDragOffset({
         x: touch.clientX - elementRect.left - elementRect.width / 2,
@@ -322,15 +385,9 @@ export const useMemeEditorLogic = () => {
     const boundedX = Math.max(5, Math.min(95, x));
     const boundedY = Math.max(5, Math.min(95, y));
     if (draggedElementType === 'text') {
-      updateTextField(draggedElementId, {
-        x: boundedX,
-        y: boundedY
-      });
+      updateTextField(draggedElementId, { x: boundedX, y: boundedY });
     } else if (draggedElementType === 'image') {
-      updateImageField(draggedElementId, {
-        x: boundedX,
-        y: boundedY
-      });
+      updateImageField(draggedElementId, { x: boundedX, y: boundedY });
     } else if (draggedElementType === 'line') {
       const line = lineFields.find(f => f.id === draggedElementId);
       if (line) {
@@ -343,6 +400,8 @@ export const useMemeEditorLogic = () => {
           y2: line.y2 + deltaY
         });
       }
+    } else if (draggedElementType === 'shape') {
+      updateShapeField(draggedElementId, { x: boundedX, y: boundedY });
     }
   };
 
@@ -358,15 +417,9 @@ export const useMemeEditorLogic = () => {
     const boundedX = Math.max(5, Math.min(95, x));
     const boundedY = Math.max(5, Math.min(95, y));
     if (draggedElementType === 'text') {
-      updateTextField(draggedElementId, {
-        x: boundedX,
-        y: boundedY
-      });
+      updateTextField(draggedElementId, { x: boundedX, y: boundedY });
     } else if (draggedElementType === 'image') {
-      updateImageField(draggedElementId, {
-        x: boundedX,
-        y: boundedY
-      });
+      updateImageField(draggedElementId, { x: boundedX, y: boundedY });
     } else if (draggedElementType === 'line') {
       const line = lineFields.find(f => f.id === draggedElementId);
       if (line) {
@@ -379,6 +432,8 @@ export const useMemeEditorLogic = () => {
           y2: line.y2 + deltaY
         });
       }
+    } else if (draggedElementType === 'shape') {
+      updateShapeField(draggedElementId, { x: boundedX, y: boundedY });
     }
   };
 
@@ -397,45 +452,42 @@ export const useMemeEditorLogic = () => {
   const rotateElement = () => {
     const selectedText = textFields.find(field => field.id === selectedTextId);
     const selectedImage = imageFields.find(field => field.id === selectedImageId);
+    const selectedShape = shapeFields.find(field => field.id === selectedShapeId);
     
     if (selectedText) {
-      updateTextField(selectedText.id, {
-        rotation: (selectedText.rotation + 15) % 360
-      });
+      updateTextField(selectedText.id, { rotation: (selectedText.rotation + 15) % 360 });
     } else if (selectedImage) {
-      updateImageField(selectedImage.id, {
-        rotation: (selectedImage.rotation + 15) % 360
-      });
+      updateImageField(selectedImage.id, { rotation: (selectedImage.rotation + 15) % 360 });
+    } else if (selectedShape) {
+      updateShapeField(selectedShape.id, { rotation: (selectedShape.rotation + 15) % 360 });
     }
   };
 
   const scaleElementUp = () => {
     const selectedText = textFields.find(field => field.id === selectedTextId);
     const selectedImage = imageFields.find(field => field.id === selectedImageId);
+    const selectedShape = shapeFields.find(field => field.id === selectedShapeId);
     
     if (selectedText) {
-      updateTextField(selectedText.id, {
-        scale: Math.min(selectedText.scale + 0.1, 3)
-      });
+      updateTextField(selectedText.id, { scale: Math.min(selectedText.scale + 0.1, 3) });
     } else if (selectedImage) {
-      updateImageField(selectedImage.id, {
-        scale: Math.min(selectedImage.scale + 0.1, 3)
-      });
+      updateImageField(selectedImage.id, { scale: Math.min(selectedImage.scale + 0.1, 3) });
+    } else if (selectedShape) {
+      updateShapeField(selectedShape.id, { scale: Math.min(selectedShape.scale + 0.1, 3) });
     }
   };
 
   const scaleElementDown = () => {
     const selectedText = textFields.find(field => field.id === selectedTextId);
     const selectedImage = imageFields.find(field => field.id === selectedImageId);
+    const selectedShape = shapeFields.find(field => field.id === selectedShapeId);
     
     if (selectedText) {
-      updateTextField(selectedText.id, {
-        scale: Math.max(selectedText.scale - 0.1, 0.3)
-      });
+      updateTextField(selectedText.id, { scale: Math.max(selectedText.scale - 0.1, 0.3) });
     } else if (selectedImage) {
-      updateImageField(selectedImage.id, {
-        scale: Math.max(selectedImage.scale - 0.1, 0.3)
-      });
+      updateImageField(selectedImage.id, { scale: Math.max(selectedImage.scale - 0.1, 0.3) });
+    } else if (selectedShape) {
+      updateShapeField(selectedShape.id, { scale: Math.max(selectedShape.scale - 0.1, 0.3) });
     }
   };
 
@@ -443,9 +495,11 @@ export const useMemeEditorLogic = () => {
     textFields,
     imageFields,
     lineFields,
+    shapeFields,
     selectedTextId,
     selectedImageId,
     selectedLineId,
+    selectedShapeId,
     templateImage,
     imageStyle,
     isDragging,
@@ -455,11 +509,14 @@ export const useMemeEditorLogic = () => {
     updateTextField,
     updateImageField,
     updateLineField,
+    updateShapeField,
     addTextField,
     addLineField,
+    addShapeField,
     removeTextField,
     removeImageField,
     removeLineField,
+    removeShapeField,
     handleImageSelect,
     handleStyleApply,
     handleTemplateSelect,
@@ -475,6 +532,7 @@ export const useMemeEditorLogic = () => {
     setSelectedTextId,
     setSelectedImageId,
     setSelectedLineId,
+    setSelectedShapeId,
     undo,
     redo,
     canUndo: currentHistoryIndex > 0,

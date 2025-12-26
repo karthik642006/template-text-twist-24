@@ -1,6 +1,6 @@
 
 import { forwardRef } from "react";
-import { TextField, ImageField, LineField } from "@/types/meme";
+import { TextField, ImageField, LineField, ShapeField } from "@/types/meme";
 import { CANVAS_CONFIG } from "@/components/meme-editor/MemeEditorCanvas";
 
 interface MemeCanvasProps {
@@ -9,11 +9,13 @@ interface MemeCanvasProps {
   textFields: TextField[];
   imageFields: ImageField[];
   lineFields: LineField[];
+  shapeFields: ShapeField[];
   selectedTextId: number;
   selectedImageId: number | null;
   selectedLineId: number | null;
-  onMouseDown: (e: React.MouseEvent, elementId: number, elementType: 'text' | 'image' | 'line') => void;
-  onTouchStart: (e: React.TouchEvent, elementId: number, elementType: 'text' | 'image' | 'line') => void;
+  selectedShapeId: number | null;
+  onMouseDown: (e: React.MouseEvent, elementId: number, elementType: 'text' | 'image' | 'line' | 'shape') => void;
+  onTouchStart: (e: React.TouchEvent, elementId: number, elementType: 'text' | 'image' | 'line' | 'shape') => void;
   onMouseMove: (e: React.MouseEvent) => void;
   onMouseUp: () => void;
   onTouchMove: (e: React.TouchEvent) => void;
@@ -26,9 +28,11 @@ const MemeCanvas = forwardRef<HTMLDivElement, MemeCanvasProps>(({
   textFields,
   imageFields,
   lineFields,
+  shapeFields,
   selectedTextId,
   selectedImageId,
   selectedLineId,
+  selectedShapeId,
   onMouseDown,
   onTouchStart,
   onMouseMove,
@@ -39,6 +43,36 @@ const MemeCanvas = forwardRef<HTMLDivElement, MemeCanvasProps>(({
   const headerText = textFields.find(field => field.type === 'header');
   const footerText = textFields.find(field => field.type === 'footer');
   const regularTextFields = textFields.filter(field => field.type === 'text');
+
+  // Helper function to render shape SVG content
+  const renderShapeSVG = (shape: ShapeField) => {
+    const { type, width, height, color, fillColor, strokeWidth } = shape;
+    const scaledWidth = width * shape.scale;
+    const scaledHeight = height * shape.scale;
+
+    switch (type) {
+      case 'line':
+        return <line x1="0" y1={scaledHeight / 2} x2={scaledWidth} y2={scaledHeight / 2} stroke={color} strokeWidth={strokeWidth} />;
+      case 'circle':
+        return <ellipse cx={scaledWidth / 2} cy={scaledHeight / 2} rx={scaledWidth / 2 - strokeWidth} ry={scaledHeight / 2 - strokeWidth} fill={fillColor} stroke={color} strokeWidth={strokeWidth} />;
+      case 'square':
+      case 'rectangle':
+        return <rect x={strokeWidth / 2} y={strokeWidth / 2} width={scaledWidth - strokeWidth} height={scaledHeight - strokeWidth} fill={fillColor} stroke={color} strokeWidth={strokeWidth} />;
+      case 'triangle':
+        return <polygon points={`${scaledWidth / 2},${strokeWidth} ${scaledWidth - strokeWidth},${scaledHeight - strokeWidth} ${strokeWidth},${scaledHeight - strokeWidth}`} fill={fillColor} stroke={color} strokeWidth={strokeWidth} />;
+      case 'pentagon':
+        const cx = scaledWidth / 2;
+        const cy = scaledHeight / 2;
+        const r = Math.min(scaledWidth, scaledHeight) / 2 - strokeWidth;
+        const points = Array.from({ length: 5 }, (_, i) => {
+          const angle = (i * 72 - 90) * (Math.PI / 180);
+          return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
+        }).join(' ');
+        return <polygon points={points} fill={fillColor} stroke={color} strokeWidth={strokeWidth} />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="relative w-full" style={{ 
@@ -230,6 +264,40 @@ const MemeCanvas = forwardRef<HTMLDivElement, MemeCanvasProps>(({
                 </>
               )}
             </svg>
+          ))}
+
+          {/* Shape Fields */}
+          {shapeFields.map(field => (
+            <div
+              key={field.id}
+              data-shape-element={field.id}
+              className="absolute cursor-move"
+              style={{
+                left: `${field.x}%`,
+                top: `${field.y}%`,
+                width: `${field.width * field.scale}px`,
+                height: `${field.height * field.scale}px`,
+                opacity: field.opacity / 100,
+                transform: `translate(-50%, -50%) rotate(${field.rotation}deg)`,
+                touchAction: 'none',
+                zIndex: selectedShapeId === field.id ? 10 : 3
+              }}
+              onMouseDown={e => onMouseDown(e, field.id, 'shape')}
+              onTouchStart={e => onTouchStart(e, field.id, 'shape')}
+            >
+              <svg 
+                width={field.width * field.scale} 
+                height={field.height * field.scale} 
+                viewBox={`0 0 ${field.width * field.scale} ${field.height * field.scale}`}
+                className="overflow-visible"
+              >
+                {renderShapeSVG(field)}
+              </svg>
+              {/* Selection ring */}
+              {selectedShapeId === field.id && (
+                <div className="absolute inset-0 ring-2 ring-blue-400 ring-opacity-50 pointer-events-none" data-selection-ring />
+              )}
+            </div>
           ))}
         </div>
 
