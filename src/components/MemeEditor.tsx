@@ -23,9 +23,11 @@ const MemeEditor = () => {
     textFields,
     imageFields,
     lineFields,
+    shapeFields,
     selectedTextId,
     selectedImageId,
     selectedLineId,
+    selectedShapeId,
     templateImage,
     imageStyle,
     updateTextField,
@@ -109,9 +111,11 @@ const MemeEditor = () => {
                 textFields={textFields}
                 imageFields={imageFields}
                 lineFields={lineFields}
+                shapeFields={shapeFields}
                 selectedTextId={selectedTextId}
                 selectedImageId={selectedImageId}
                 selectedLineId={selectedLineId}
+                selectedShapeId={selectedShapeId}
                 onMouseDown={handleMouseDown}
                 onTouchStart={handleTouchStart}
                 onMouseMove={handleMouseMove}

@@ -1,16 +1,18 @@
 import { forwardRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MemeCanvas from "@/components/MemeCanvas";
-import { TextField, ImageField } from "@/types/meme";
+import { TextField, ImageField, ShapeField } from "@/types/meme";
 interface MemeEditorCanvasProps {
   templateImage: string;
   imageStyle: string;
   textFields: TextField[];
   imageFields: ImageField[];
+  shapeFields: ShapeField[];
   selectedTextId: number;
   selectedImageId: number | null;
-  onMouseDown: (e: React.MouseEvent, elementId: number, elementType: 'text' | 'image') => void;
-  onTouchStart: (e: React.TouchEvent, elementId: number, elementType: 'text' | 'image') => void;
+  selectedShapeId: number | null;
+  onMouseDown: (e: React.MouseEvent, elementId: number, elementType: 'text' | 'image' | 'shape') => void;
+  onTouchStart: (e: React.TouchEvent, elementId: number, elementType: 'text' | 'image' | 'shape') => void;
   onMouseMove: (e: React.MouseEvent) => void;
   onMouseUp: () => void;
   onTouchMove: (e: React.TouchEvent) => void;
@@ -73,8 +75,10 @@ const MemeEditorCanvas = forwardRef<HTMLDivElement, MemeEditorCanvasProps>(({
   imageStyle,
   textFields,
   imageFields,
+  shapeFields,
   selectedTextId,
   selectedImageId,
+  selectedShapeId,
   onMouseDown,
   onTouchStart,
   onMouseMove,
@@ -84,12 +88,11 @@ const MemeEditorCanvas = forwardRef<HTMLDivElement, MemeEditorCanvasProps>(({
 }, ref) => {
   return <ScrollArea className="h-[calc(100vh-80px)]">
       <div className="rounded-sm">
-        {/* Meme Preview Section - FIXED FOR EXACT POSITIONING */}
         <div className={`flex items-center justify-center ${CANVAS_CONFIG.canvas.backgroundColor} p-4`} style={{
         minHeight: CANVAS_CONFIG.canvas.minHeight
       }}>
           <div className="w-full max-w-lg border-0">
-            <MemeCanvas ref={ref} templateImage={templateImage} imageStyle={imageStyle} textFields={textFields} imageFields={imageFields} lineFields={[]} selectedTextId={selectedTextId} selectedImageId={selectedImageId} selectedLineId={null} onMouseDown={onMouseDown} onTouchStart={onTouchStart} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} />
+            <MemeCanvas ref={ref} templateImage={templateImage} imageStyle={imageStyle} textFields={textFields} imageFields={imageFields} lineFields={[]} shapeFields={shapeFields} selectedTextId={selectedTextId} selectedImageId={selectedImageId} selectedLineId={null} selectedShapeId={selectedShapeId} onMouseDown={onMouseDown} onTouchStart={onTouchStart} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} />
           </div>
         </div>
       </div>
