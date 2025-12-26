@@ -4,10 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, Minus, Plus } from "lucide-react";
+import { ShapeType } from "@/types/meme";
 
 interface TemplateElement {
   id: number;
-  type: 'text' | 'image' | 'line';
+  type: 'text' | 'image' | 'line' | 'shape';
   x: number;
   y: number;
   width?: number;
@@ -21,6 +22,10 @@ interface TemplateElement {
   y2?: number;
   thickness?: number;
   lineType?: 'horizontal' | 'vertical';
+  // Shape-specific properties
+  shapeType?: ShapeType;
+  fillColor?: string;
+  strokeWidth?: number;
 }
 
 interface TemplateLineControlsProps {

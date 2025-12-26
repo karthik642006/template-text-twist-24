@@ -35,6 +35,7 @@ const MemeEditor = () => {
     updateLineField,
     addTextField,
     addLineField,
+    addShapeField,
     removeTextField,
     removeImageField,
     removeLineField,
@@ -96,6 +97,7 @@ const MemeEditor = () => {
           onImageSelect={handleImageSelect}
           onStyleApply={handleStyleApply}
           onTemplateSelect={handleTemplateSelect}
+          onShapeSelect={addShapeField}
         />
       </div>
 
