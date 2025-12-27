@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { RotateCw, ZoomIn, ZoomOut } from "lucide-react";
-import { TextField, ImageField } from "@/types/meme";
+import { RotateCw, ZoomIn, ZoomOut, Upload } from "lucide-react";
+import { TextField, ImageField, ShapeField } from "@/types/meme";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -8,19 +8,23 @@ import { Checkbox } from "@/components/ui/checkbox";
 interface ElementControlsProps {
   selectedText: TextField | undefined;
   selectedImage: (ImageField & { isLogo?: boolean, borderColor?: string, borderWidth?: number, shadow?: boolean }) | undefined;
+  selectedShape: ShapeField | undefined;
   onRotate: () => void;
   onScaleUp: () => void;
   onScaleDown: () => void;
   onUpdateElement: (updates: Partial<ImageField & { isLogo?: boolean, borderColor?: string, borderWidth?: number, shadow?: boolean }>) => void;
+  onUploadImage: () => void;
 }
 
 const ElementControls = ({
   selectedText,
   selectedImage,
+  selectedShape,
   onRotate,
   onScaleUp,
   onScaleDown,
-  onUpdateElement
+  onUpdateElement,
+  onUploadImage,
 }: ElementControlsProps) => {
   return <div className="space-y-2 p-2 sm:p-3 bg-card border border-border rounded-lg">
       <h4 className="font-medium text-card-foreground text-xs sm:text-sm">Element Controls</h4>
@@ -39,7 +43,7 @@ const ElementControls = ({
         </Button>
       </div>
       <p className="text-xs sm:text-sm text-muted-foreground text-center">
-        {selectedText ? `Selected: Text Element` : selectedImage ? `Selected: Image Element` : 'Transform tools available'}
+        {selectedText ? `Selected: Text Element` : selectedImage ? `Selected: Image Element` : selectedShape ? `Selected: Shape Element` : 'Transform tools available'}
       </p>
       {selectedImage?.isLogo && (
         <div className="space-y-4 pt-4 border-t border-border">
@@ -77,6 +81,14 @@ const ElementControls = ({
               Add Drop Shadow
             </label>
           </div>
+        </div>
+      )}
+      {selectedShape && (
+        <div className="space-y-4 pt-4 border-t border-border">
+          <Button onClick={onUploadImage} className="w-full bg-blue-600 hover:bg-blue-700">
+            <Upload className="w-4 h-4 mr-2" />
+            Upload Image into Shape
+          </Button>
         </div>
       )}
     </div>;

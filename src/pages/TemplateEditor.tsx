@@ -14,8 +14,8 @@ import ElementControls from "@/components/ElementControls";
 import UndoRedoControls from "@/components/UndoRedoControls";
 import TemplateLineControls from "@/components/TemplateLineControls";
 import { captureMemeContainer } from "@/utils/memeDownloadUtils";
-import { ShapeType } from "@/types/meme";
-import { CircleLogoUploader } from "@/components/CircleLogoUploader";
+import { ShapeField, ShapeType } from "@/types/meme";
+import { ImageInShapeEditor } from "@/components/ImageInShapeEditor";
 
 interface TemplateElement {
   id: number;
@@ -42,6 +42,11 @@ interface TemplateElement {
   borderWidth?: number;
   shadow?: boolean;
   isLogo?: boolean;
+  // Image in shape properties
+  imageUrl?: string;
+  imageX?: number;
+  imageY?: number;
+  imageScale?: number;
 }
 
 interface Template {
@@ -61,6 +66,8 @@ const TemplateEditor = () => {
   const [showCropDialog, setShowCropDialog] = useState(false);
   const [showShapesDialog, setShowShapesDialog] = useState(false);
   const [showLogoUploader, setShowLogoUploader] = useState(false);
+  const [showImageInShapeEditor, setShowImageInShapeEditor] = useState(false);
+  const [selectedShapeForImageUpload, setSelectedShapeForImageUpload] = useState<TemplateElement | null>(null);
   const [editingText, setEditingText] = useState<string>("");
   const [editingTextIndex, setEditingTextIndex] = useState<number | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -318,6 +325,20 @@ const TemplateEditor = () => {
       description: "Your logo has been added to the canvas."
     });
   }
+
+  const handleImageInShapeUpload = (imageUrl: string) => {
+    if (selectedShapeForImageUpload) {
+      updateElement(selectedShapeForImageUpload.id, { imageUrl });
+      saveToHistory();
+      toast({
+        title: "Image added to shape!",
+        description: "Your image has been successfully placed inside the shape."
+      });
+    }
+    setShowImageInShapeEditor(false);
+    setSelectedShapeForImageUpload(null);
+  }
+
   const updateElement = (id: number, updates: Partial<TemplateElement>) => {
     setCustomElements(prev => prev.map(el => el.id === id ? {
       ...el,
@@ -859,6 +880,41 @@ const TemplateEditor = () => {
                                       filter: selectedElement === shape.id ? 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.5))' : 'none'
                                     }}
                                   >
+                                    <defs>
+                                      {shape.imageUrl && (() => {
+                                        const id = `clip-${shape.id}`;
+                                        const w = shape.width || 80;
+                                        const h = shape.height || 80;
+                                        const sw = shape.strokeWidth || 2;
+                                        return (
+                                          <clipPath key={id} id={id}>
+                                            {shape.shapeType === 'circle' && <ellipse cx={w / 2} cy={h / 2} rx={w / 2 - sw} ry={h/2 - sw} />}
+                                            {(shape.shapeType === 'square' || shape.shapeType === 'rectangle' || shape.shapeType === 'rounded-rectangle') && <rect x={sw / 2} y={sw / 2} width={w - sw} height={h - sw} rx={shape.shapeType === 'rounded-rectangle' ? 10 : 0} />}
+                                            {shape.shapeType === 'triangle' && <polygon points={`${w / 2},${sw} ${w - sw},${h - sw} ${sw},${h - sw}`} />}
+                                            {shape.shapeType === 'pentagon' && (() => {
+                                              const cx = w / 2; const cy = h / 2; const r = Math.min(w, h) / 2 - sw;
+                                              const points = Array.from({ length: 5 }, (_, i) => { const angle = (i * 72 - 90) * (Math.PI / 180); return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`; }).join(' ');
+                                              return <polygon points={points} />;
+                                            })()}
+                                            {shape.shapeType === 'star' && (() => {
+                                              const cx = w / 2; const cy = h / 2; const outerRadius = Math.min(w, h) / 2 - sw; const innerRadius = outerRadius / 2; let points = '';
+                                              for (let i = 0; i < 10; i++) { const radius = i % 2 === 0 ? outerRadius : innerRadius; const angle = (i * 36 - 90) * (Math.PI / 180); points += `${cx + radius * Math.cos(angle)},${cy + radius * Math.sin(angle)} `; }
+                                              return <polygon points={points.trim()} />;
+                                            })()}
+                                            {shape.shapeType === 'heart' && <path d={`M ${w / 2},${h * 0.3} C ${w * 0.2},${h * 0.1} ${-w * 0.2},${h * 0.6} ${w / 2},${h * 0.9} C ${w * 1.2},${h * 0.6} ${w * 0.8},${h * 0.1} ${w / 2},${h * 0.3} Z`} />}
+                                          </clipPath>
+                                        );
+                                      })()}
+                                    </defs>
+
+                                    {shape.imageUrl && (
+                                      <image
+                                        href={shape.imageUrl}
+                                        width="100%"
+                                        height="100%"
+                                        clipPath={`url(#clip-${shape.id})`}
+                                      />
+                                    )}
                                     {shape.shapeType === 'line' && (
                                       <line 
                                         x1="0" 
@@ -875,7 +931,7 @@ const TemplateEditor = () => {
                                         cy={(shape.height || 80) / 2} 
                                         rx={(shape.width || 80) / 2 - (shape.strokeWidth || 2)} 
                                         ry={(shape.height || 80) / 2 - (shape.strokeWidth || 2)} 
-                                        fill={shape.fillColor || 'transparent'} 
+                                        fill={shape.imageUrl ? 'none' : (shape.fillColor || 'transparent')}
                                         stroke={shape.color || '#000000'} 
                                         strokeWidth={shape.strokeWidth || 2} 
                                       />
@@ -886,7 +942,7 @@ const TemplateEditor = () => {
                                         y={(shape.strokeWidth || 2) / 2} 
                                         width={(shape.width || 80) - (shape.strokeWidth || 2)} 
                                         height={(shape.height || 80) - (shape.strokeWidth || 2)} 
-                                        fill={shape.fillColor || 'transparent'} 
+                                        fill={shape.imageUrl ? 'none' : (shape.fillColor || 'transparent')}
                                         stroke={shape.color || '#000000'} 
                                         strokeWidth={shape.strokeWidth || 2}
                                         rx={shape.shapeType === 'rounded-rectangle' ? 10 : 0}
@@ -895,7 +951,7 @@ const TemplateEditor = () => {
                                     {shape.shapeType === 'triangle' && (
                                       <polygon 
                                         points={`${(shape.width || 80) / 2},${shape.strokeWidth || 2} ${(shape.width || 80) - (shape.strokeWidth || 2)},${(shape.height || 80) - (shape.strokeWidth || 2)} ${shape.strokeWidth || 2},${(shape.height || 80) - (shape.strokeWidth || 2)}`}
-                                        fill={shape.fillColor || 'transparent'} 
+                                        fill={shape.imageUrl ? 'none' : (shape.fillColor || 'transparent')}
                                         stroke={shape.color || '#000000'} 
                                         strokeWidth={shape.strokeWidth || 2} 
                                       />
@@ -913,7 +969,7 @@ const TemplateEditor = () => {
                                       return (
                                         <polygon 
                                           points={points}
-                                          fill={shape.fillColor || 'transparent'} 
+                                          fill={shape.imageUrl ? 'none' : (shape.fillColor || 'transparent')}
                                           stroke={shape.color || '#000000'} 
                                           strokeWidth={shape.strokeWidth || 2} 
                                         />
@@ -935,7 +991,7 @@ const TemplateEditor = () => {
                                       return (
                                         <polygon
                                           points={points.trim()}
-                                          fill={shape.fillColor || 'transparent'}
+                                          fill={shape.imageUrl ? 'none' : (shape.fillColor || 'transparent')}
                                           stroke={shape.color || '#000000'}
                                           strokeWidth={shape.strokeWidth || 2}
                                         />
@@ -953,7 +1009,7 @@ const TemplateEditor = () => {
                                       return (
                                         <path
                                           d={path}
-                                          fill={shape.fillColor || 'transparent'}
+                                          fill={shape.imageUrl ? 'none' : (shape.fillColor || 'transparent')}
                                           stroke={shape.color || '#000000'}
                                           strokeWidth={sw}
                                         />
@@ -995,10 +1051,19 @@ const TemplateEditor = () => {
                       customElements.find(el => el.id === selectedElement && el.type === 'text') as any : undefined} 
                     selectedImage={selectedElement && customElements.find(el => el.id === selectedElement && el.type === 'image') ? 
                       customElements.find(el => el.id === selectedElement && el.type === 'image') as any : undefined} 
+                    selectedShape={selectedElement && customElements.find(el => el.id === selectedElement && el.type === 'shape') ?
+                      customElements.find(el => el.id === selectedElement && el.type === 'shape') as ShapeField : undefined}
                     onRotate={rotateElement} 
                     onScaleUp={scaleElementUp} 
                     onScaleDown={scaleElementDown}
                     onUpdateElement={(updates) => selectedElement && updateElement(selectedElement, updates)}
+                    onUploadImage={() => {
+                      const shape = customElements.find(el => el.id === selectedElement && el.type === 'shape');
+                      if (shape) {
+                        setSelectedShapeForImageUpload(shape);
+                        setShowImageInShapeEditor(true);
+                      }
+                    }}
                   />
                   
                   <Card className="bg-gray-800/50 border-gray-700">
@@ -1432,10 +1497,17 @@ const TemplateEditor = () => {
           </DialogContent>
         </Dialog>
 
-        <CircleLogoUploader
+        <ImageInShapeEditor
           open={showLogoUploader}
           onOpenChange={setShowLogoUploader}
-          onLogoUpload={handleLogoUpload}
+          onImageUpload={handleLogoUpload}
+          shapeType={"circle"}
+        />
+        <ImageInShapeEditor
+          open={showImageInShapeEditor}
+          onOpenChange={setShowImageInShapeEditor}
+          onImageUpload={handleImageInShapeUpload}
+          shapeType={selectedShapeForImageUpload?.shapeType || null}
         />
       </main>
     </div>;

@@ -55,4 +55,6 @@ export interface ShapeField {
   scale: number;
   // For custom shapes - array of points
   points?: { x: number; y: number }[];
+  // For image fills
+  imageUrl?: string;
 }

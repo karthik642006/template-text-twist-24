@@ -6,14 +6,16 @@ import { Slider } from '@/components/ui/slider';
 import ReactCrop, { type Crop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { Upload, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { ShapeType } from '@/types/meme';
 
-interface CircleLogoUploaderProps {
+interface ImageInShapeEditorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onLogoUpload: (logoUrl: string) => void;
+  onImageUpload: (imageUrl: string) => void;
+  shapeType: ShapeType | null;
 }
 
-export const CircleLogoUploader = ({ open, onOpenChange, onLogoUpload }: CircleLogoUploaderProps) => {
+export const ImageInShapeEditor = ({ open, onOpenChange, onImageUpload, shapeType }: ImageInShapeEditorProps) => {
   const [image, setImage] = useState<string | null>(null);
   const [crop, setCrop] = useState<Crop>();
   const [zoom, setZoom] = useState(1);
@@ -33,8 +35,8 @@ export const CircleLogoUploader = ({ open, onOpenChange, onLogoUpload }: CircleL
       const canvas = document.createElement('canvas');
       const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
       const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
-      const cropWidth = crop ? crop.width * scaleX : 0;
-      const cropHeight = crop ? crop.height * scaleY : 0;
+      const cropWidth = crop ? crop.width * scaleX : imgRef.current.naturalWidth;
+      const cropHeight = crop ? crop.height * scaleY : imgRef.current.naturalHeight;
       canvas.width = cropWidth;
       canvas.height = cropHeight;
       const ctx = canvas.getContext('2d');
@@ -49,8 +51,8 @@ export const CircleLogoUploader = ({ open, onOpenChange, onLogoUpload }: CircleL
           imgRef.current,
           crop ? crop.x * scaleX : 0,
           crop ? crop.y * scaleY : 0,
-          cropWidth,
-          cropHeight,
+          crop ? crop.width * scaleX : imgRef.current.naturalWidth,
+          crop ? crop.height * scaleY : imgRef.current.naturalHeight,
           0,
           0,
           cropWidth,
@@ -59,8 +61,13 @@ export const CircleLogoUploader = ({ open, onOpenChange, onLogoUpload }: CircleL
         ctx.restore();
 
         const dataUrl = canvas.toDataURL('image/png');
-        onLogoUpload(dataUrl);
+        onImageUpload(dataUrl);
         onOpenChange(false);
+        // Reset state for next use
+        setImage(null);
+        setCrop(undefined);
+        setZoom(1);
+        setRotation(0);
       }
     }
   };
@@ -69,7 +76,7 @@ export const CircleLogoUploader = ({ open, onOpenChange, onLogoUpload }: CircleL
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-gray-800 border-gray-700 text-white">
         <DialogHeader>
-          <DialogTitle>Upload and Edit Logo</DialogTitle>
+          <DialogTitle>Upload and Edit Image</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {!image ? (
@@ -79,10 +86,10 @@ export const CircleLogoUploader = ({ open, onOpenChange, onLogoUpload }: CircleL
                 accept="image/*"
                 onChange={handleFileChange}
                 className="hidden"
-                id="logo-upload"
+                id="image-in-shape-upload"
               />
               <label
-                htmlFor="logo-upload"
+                htmlFor="image-in-shape-upload"
                 className="cursor-pointer flex flex-col items-center"
               >
                 <Upload className="w-12 h-12 text-gray-400" />
@@ -94,13 +101,13 @@ export const CircleLogoUploader = ({ open, onOpenChange, onLogoUpload }: CircleL
               <ReactCrop
                 crop={crop}
                 onChange={setCrop}
-                circularCrop
-                aspect={1}
+                circularCrop={shapeType === 'circle'}
+                aspect={shapeType === 'circle' || shapeType === 'square' ? 1 : undefined}
               >
                 <img
                   ref={imgRef}
                   src={image}
-                  alt="Logo preview"
+                  alt="Image preview"
                   style={{
                     transform: `scale(${zoom}) rotate(${rotation}deg)`,
                     maxHeight: '400px',
@@ -142,7 +149,7 @@ export const CircleLogoUploader = ({ open, onOpenChange, onLogoUpload }: CircleL
             Cancel
           </Button>
           <Button onClick={handleUpload} className="bg-green-600 hover:bg-green-700" disabled={!image}>
-            Upload Logo
+            Upload Image
           </Button>
         </DialogFooter>
       </DialogContent>
