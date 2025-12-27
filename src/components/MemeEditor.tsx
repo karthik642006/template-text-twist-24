@@ -133,9 +133,19 @@ const MemeEditor = () => {
             <ElementControls
               selectedText={selectedText}
               selectedImage={selectedImage}
+              selectedShape={shapeFields.find(f => f.id === selectedShapeId)}
               onRotate={rotateElement}
               onScaleUp={scaleElementUp}
               onScaleDown={scaleElementDown}
+              onUpdateElement={(updates) => {
+                if (selectedImageId) {
+                  updateImageField(selectedImageId, updates);
+                  saveToHistory();
+                }
+              }}
+              onUploadImage={() => {
+                // Will be implemented with shape image upload
+              }}
             />
 
             <TextFieldControls

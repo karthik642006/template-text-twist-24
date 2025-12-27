@@ -225,6 +225,9 @@ export const useMemeEditorLogic = () => {
       'rectangle': { width: 120, height: 60 },
       'triangle': { width: 80, height: 70 },
       'pentagon': { width: 80, height: 80 },
+      'star': { width: 80, height: 80 },
+      'heart': { width: 80, height: 80 },
+      'rounded-rectangle': { width: 120, height: 60 },
       'custom': { width: 100, height: 100 }
     };
 
