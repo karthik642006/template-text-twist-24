@@ -47,6 +47,14 @@ interface TemplateElement {
   imageX?: number;
   imageY?: number;
   imageScale?: number;
+  // Required for ShapeField compatibility
+  opacity?: number;
+  rotation?: number;
+  scale?: number;
+  // Video support
+  videoUrl?: string;
+  // Freehand drawing points
+  points?: { x: number; y: number }[];
 }
 
 interface Template {
@@ -1052,7 +1060,26 @@ const TemplateEditor = () => {
                     selectedImage={selectedElement && customElements.find(el => el.id === selectedElement && el.type === 'image') ? 
                       customElements.find(el => el.id === selectedElement && el.type === 'image') as any : undefined} 
                     selectedShape={selectedElement && customElements.find(el => el.id === selectedElement && el.type === 'shape') ?
-                      customElements.find(el => el.id === selectedElement && el.type === 'shape') as ShapeField : undefined}
+                      (() => {
+                        const el = customElements.find(e => e.id === selectedElement && e.type === 'shape');
+                        if (!el) return undefined;
+                        return {
+                          id: el.id,
+                          type: el.shapeType || 'square',
+                          x: el.x,
+                          y: el.y,
+                          width: el.width || 80,
+                          height: el.height || 80,
+                          color: el.color || '#000000',
+                          fillColor: el.fillColor || 'transparent',
+                          strokeWidth: el.strokeWidth || 2,
+                          opacity: el.opacity ?? 100,
+                          rotation: el.rotation ?? 0,
+                          scale: el.scale ?? 1,
+                          imageUrl: el.imageUrl,
+                          points: el.points
+                        } as ShapeField;
+                      })() : undefined}
                     onRotate={rotateElement} 
                     onScaleUp={scaleElementUp} 
                     onScaleDown={scaleElementDown}

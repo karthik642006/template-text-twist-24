@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { TextField, ImageField } from "@/types/meme";
+import { TextField, ImageField, ShapeField } from "@/types/meme";
 import ElementControls from "@/components/ElementControls";
 import TextFieldControls from "@/components/TextFieldControls";
 import ImageFieldControls from "@/components/ImageFieldControls";
@@ -10,6 +10,7 @@ interface MemeEditorControlsProps {
   imageFields: ImageField[];
   selectedText?: TextField;
   selectedImage?: ImageField;
+  selectedShape?: ShapeField;
   selectedTextId: number;
   selectedImageId: number | null;
   onUpdateTextField: (id: number, updates: Partial<TextField>) => void;
@@ -22,6 +23,8 @@ interface MemeEditorControlsProps {
   onRotate: () => void;
   onScaleUp: () => void;
   onScaleDown: () => void;
+  onUpdateElement?: (updates: Partial<ImageField>) => void;
+  onUploadImage?: () => void;
 }
 
 const MemeEditorControls = ({
@@ -29,6 +32,7 @@ const MemeEditorControls = ({
   imageFields,
   selectedText,
   selectedImage,
+  selectedShape,
   selectedTextId,
   selectedImageId,
   onUpdateTextField,
@@ -40,16 +44,21 @@ const MemeEditorControls = ({
   onAddTextField,
   onRotate,
   onScaleUp,
-  onScaleDown
+  onScaleDown,
+  onUpdateElement,
+  onUploadImage
 }: MemeEditorControlsProps) => {
   return (
     <div className="bg-white border-t border-gray-200 p-4 sm:p-6 space-y-6">
       <ElementControls
         selectedText={selectedText}
         selectedImage={selectedImage}
+        selectedShape={selectedShape}
         onRotate={onRotate}
         onScaleUp={onScaleUp}
         onScaleDown={onScaleDown}
+        onUpdateElement={onUpdateElement || (() => {})}
+        onUploadImage={onUploadImage || (() => {})}
       />
 
       <TextFieldControls
