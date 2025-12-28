@@ -99,6 +99,7 @@ const TemplateEditor = () => {
   
   // Number of shapes to add
   const [shapeCount, setShapeCount] = useState(1);
+  const [imageContainerSize, setImageContainerSize] = useState(100);
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const {
@@ -306,20 +307,15 @@ const TemplateEditor = () => {
     const cols = Math.ceil(Math.sqrt(count));
     const rows = Math.ceil(count / cols);
     
-    // Calculate size to fit within canvas with padding
-    const availableWidth = CANVAS_WIDTH - CANVAS_PADDING * 2;
-    const availableHeight = CANVAS_HEIGHT - CANVAS_PADDING * 2;
+    // Use the user-defined size
+    const size = imageContainerSize;
     const gap = 5;
-    
-    const containerWidth = Math.floor((availableWidth - gap * (cols - 1)) / cols);
-    const containerHeight = Math.floor((availableHeight - gap * (rows - 1)) / rows);
-    const size = Math.min(containerWidth, containerHeight, 150); // Cap max size
-    
+
     // Recalculate to center the grid
     const totalWidth = cols * size + (cols - 1) * gap;
     const totalHeight = rows * size + (rows - 1) * gap;
-    const startX = CANVAS_PADDING + (availableWidth - totalWidth) / 2;
-    const startY = CANVAS_PADDING + (availableHeight - totalHeight) / 2;
+    const startX = CANVAS_PADDING + (CANVAS_WIDTH - CANVAS_PADDING * 2 - totalWidth) / 2;
+    const startY = CANVAS_PADDING + (CANVAS_HEIGHT - CANVAS_PADDING * 2 - totalHeight) / 2;
     
     for (let i = 0; i < count; i++) {
       const col = i % cols;
@@ -1319,6 +1315,15 @@ const TemplateEditor = () => {
                              Add {shapeCount > 1 ? `${shapeCount} Images` : 'Image'}
                            </Button>
                          </div>
+                         <label className="text-xs text-gray-400 block mt-2">Container Size: {imageContainerSize}px</label>
+                         <Slider
+                           value={[imageContainerSize]}
+                           onValueChange={(value) => setImageContainerSize(value[0])}
+                           min={20}
+                           max={300}
+                           step={5}
+                           className="w-full"
+                         />
                        </div>
                        <div className="grid grid-cols-2 gap-2">
                          <Button onClick={() => addLineElement('horizontal')} className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm py-3 sm:py-2 min-h-[44px] sm:min-h-auto">
