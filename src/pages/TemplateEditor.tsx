@@ -366,13 +366,28 @@ const TemplateEditor = () => {
   };
   
   const addShapeElement = (shapeType: ShapeType, color: string, fillColor: string, strokeWidth: number) => {
+    const shapeElements = customElements.filter(el => el.type === 'shape');
+    if (shapeElements.length >= 150) {
+      toast({
+        title: "Shape limit reached",
+        description: "You can add a maximum of 150 shapes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newCount = shapeElements.length + 1;
+    const size = Math.max(20, 100 - newCount * 0.5); // Dynamically calculate size
+    const newWidth = shapeType === 'line' ? size : size;
+    const newHeight = shapeType === 'line' ? Math.max(5, size / 8) : size;
+
     const newElement: TemplateElement = {
       id: Date.now(),
       type: 'shape',
-      x: 150,
-      y: 150,
-      width: shapeType === 'line' ? 100 : 80,
-      height: shapeType === 'line' ? 10 : 80,
+      x: CANVAS_WIDTH - newWidth - CANVAS_PADDING, // Position in top-right corner
+      y: CANVAS_PADDING,
+      width: newWidth,
+      height: newHeight,
       content: '',
       color: color,
       fillColor: fillColor,
@@ -391,7 +406,17 @@ const TemplateEditor = () => {
   };
 
   const addMultipleShapeElements = (shapeType: ShapeType, color: string, fillColor: string, strokeWidth: number) => {
-    const count = Math.max(1, Math.min(shapeCount, 150)); // Limit between 1 and 150
+    const shapeElements = customElements.filter(el => el.type === 'shape');
+    if (shapeElements.length >= 150) {
+      toast({
+        title: "Shape limit reached",
+        description: "You can add a maximum of 150 shapes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const count = Math.max(1, Math.min(shapeCount, 150 - shapeElements.length));
     const newElements: TemplateElement[] = [];
     
     // Calculate optimal grid layout based on count
@@ -407,11 +432,10 @@ const TemplateEditor = () => {
     const containerHeight = Math.floor((availableHeight - gap * (rows - 1)) / rows);
     const size = Math.min(containerWidth, containerHeight, 150); // Cap max size
     
-    // Recalculate to center the grid
+    // Recalculate to position the grid in the top-right corner
     const totalWidth = cols * size + (cols - 1) * gap;
-    const totalHeight = rows * size + (rows - 1) * gap;
-    const startX = CANVAS_PADDING + (availableWidth - totalWidth) / 2;
-    const startY = CANVAS_PADDING + (availableHeight - totalHeight) / 2;
+    const startX = CANVAS_WIDTH - totalWidth - CANVAS_PADDING;
+    const startY = CANVAS_PADDING;
     
     for (let i = 0; i < count; i++) {
       const col = i % cols;
