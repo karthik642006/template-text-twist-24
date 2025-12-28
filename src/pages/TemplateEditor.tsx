@@ -257,32 +257,6 @@ const TemplateEditor = () => {
     setCustomElements(prev => [...prev, newElement]);
     saveToHistory();
   };
-  const addImageElement = () => {
-    const imageElements = customElements.filter(el => el.type === 'image');
-    if (imageElements.length >= 150) {
-      toast({
-        title: "Image limit reached",
-        description: "You can add a maximum of 150 image containers.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const newCount = imageElements.length + 1;
-    const size = Math.max(30, 200 - newCount * 1.5); // Example sizing logic
-
-    const newElement: TemplateElement = {
-      id: Date.now(),
-      type: 'image',
-      x: 150,
-      y: 150,
-      width: size,
-      height: size,
-      content: ''
-    };
-    setCustomElements(prev => [...prev, newElement]);
-    saveToHistory();
-  };
 
   // Template canvas dimensions
   const CANVAS_WIDTH = 600;
