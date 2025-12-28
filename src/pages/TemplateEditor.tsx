@@ -270,24 +270,47 @@ const TemplateEditor = () => {
     saveToHistory();
   };
 
+  // Template canvas dimensions
+  const CANVAS_WIDTH = 600;
+  const CANVAS_HEIGHT = 500;
+  const CANVAS_PADDING = 10;
+
   const addMultipleImageElements = () => {
-    const count = Math.max(1, Math.min(shapeCount, 20)); // Limit between 1 and 20
+    const count = Math.max(1, Math.min(shapeCount, 150)); // Limit between 1 and 150
     const newElements: TemplateElement[] = [];
-    const baseX = 50;
-    const baseY = 50;
-    const spacing = 120;
-    const itemsPerRow = 4;
+    
+    // Calculate optimal grid layout based on count
+    const cols = Math.ceil(Math.sqrt(count));
+    const rows = Math.ceil(count / cols);
+    
+    // Calculate size to fit within canvas with padding
+    const availableWidth = CANVAS_WIDTH - CANVAS_PADDING * 2;
+    const availableHeight = CANVAS_HEIGHT - CANVAS_PADDING * 2;
+    const gap = 5;
+    
+    const containerWidth = Math.floor((availableWidth - gap * (cols - 1)) / cols);
+    const containerHeight = Math.floor((availableHeight - gap * (rows - 1)) / rows);
+    const size = Math.min(containerWidth, containerHeight, 150); // Cap max size
+    
+    // Recalculate to center the grid
+    const totalWidth = cols * size + (cols - 1) * gap;
+    const totalHeight = rows * size + (rows - 1) * gap;
+    const startX = CANVAS_PADDING + (availableWidth - totalWidth) / 2;
+    const startY = CANVAS_PADDING + (availableHeight - totalHeight) / 2;
     
     for (let i = 0; i < count; i++) {
-      const col = i % itemsPerRow;
-      const row = Math.floor(i / itemsPerRow);
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = startX + col * (size + gap);
+      const y = startY + row * (size + gap);
+      
       newElements.push({
         id: Date.now() + i,
         type: 'image',
-        x: baseX + col * spacing,
-        y: baseY + row * spacing,
-        width: 100,
-        height: 100,
+        x: Math.max(CANVAS_PADDING, Math.min(x, CANVAS_WIDTH - size - CANVAS_PADDING)),
+        y: Math.max(CANVAS_PADDING, Math.min(y, CANVAS_HEIGHT - size - CANVAS_PADDING)),
+        width: size,
+        height: size,
         content: ''
       });
     }
@@ -345,23 +368,41 @@ const TemplateEditor = () => {
   };
 
   const addMultipleShapeElements = (shapeType: ShapeType, color: string, fillColor: string, strokeWidth: number) => {
-    const count = Math.max(1, Math.min(shapeCount, 20));
+    const count = Math.max(1, Math.min(shapeCount, 150)); // Limit between 1 and 150
     const newElements: TemplateElement[] = [];
-    const baseX = 50;
-    const baseY = 50;
-    const spacing = 100;
-    const itemsPerRow = 4;
+    
+    // Calculate optimal grid layout based on count
+    const cols = Math.ceil(Math.sqrt(count));
+    const rows = Math.ceil(count / cols);
+    
+    // Calculate size to fit within canvas with padding
+    const availableWidth = CANVAS_WIDTH - CANVAS_PADDING * 2;
+    const availableHeight = CANVAS_HEIGHT - CANVAS_PADDING * 2;
+    const gap = 5;
+    
+    const containerWidth = Math.floor((availableWidth - gap * (cols - 1)) / cols);
+    const containerHeight = Math.floor((availableHeight - gap * (rows - 1)) / rows);
+    const size = Math.min(containerWidth, containerHeight, 150); // Cap max size
+    
+    // Recalculate to center the grid
+    const totalWidth = cols * size + (cols - 1) * gap;
+    const totalHeight = rows * size + (rows - 1) * gap;
+    const startX = CANVAS_PADDING + (availableWidth - totalWidth) / 2;
+    const startY = CANVAS_PADDING + (availableHeight - totalHeight) / 2;
     
     for (let i = 0; i < count; i++) {
-      const col = i % itemsPerRow;
-      const row = Math.floor(i / itemsPerRow);
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = startX + col * (size + gap);
+      const y = startY + row * (size + gap);
+      
       newElements.push({
         id: Date.now() + i,
         type: 'shape',
-        x: baseX + col * spacing,
-        y: baseY + row * spacing,
-        width: shapeType === 'line' ? 100 : 80,
-        height: shapeType === 'line' ? 10 : 80,
+        x: Math.max(CANVAS_PADDING, Math.min(x, CANVAS_WIDTH - size - CANVAS_PADDING)),
+        y: Math.max(CANVAS_PADDING, Math.min(y, CANVAS_HEIGHT - size - CANVAS_PADDING)),
+        width: shapeType === 'line' ? size : size,
+        height: shapeType === 'line' ? Math.max(10, size / 8) : size,
         content: '',
         color: color,
         fillColor: fillColor,
@@ -499,9 +540,14 @@ const TemplateEditor = () => {
       } else {
         const newX = e.clientX - rect.left - dragOffset.x;
         const newY = e.clientY - rect.top - dragOffset.y;
+        const elWidth = element.width || 100;
+        const elHeight = element.height || 100;
+        // Constrain within canvas borders
+        const constrainedX = Math.max(CANVAS_PADDING, Math.min(newX, CANVAS_WIDTH - elWidth - CANVAS_PADDING));
+        const constrainedY = Math.max(CANVAS_PADDING, Math.min(newY, CANVAS_HEIGHT - elHeight - CANVAS_PADDING));
         updateElement(selectedElement, {
-          x: newX,
-          y: newY
+          x: constrainedX,
+          y: constrainedY
         });
       }
     }
@@ -528,9 +574,14 @@ const TemplateEditor = () => {
       } else {
         const newX = touch.clientX - rect.left - dragOffset.x;
         const newY = touch.clientY - rect.top - dragOffset.y;
+        const elWidth = element.width || 100;
+        const elHeight = element.height || 100;
+        // Constrain within canvas borders
+        const constrainedX = Math.max(CANVAS_PADDING, Math.min(newX, CANVAS_WIDTH - elWidth - CANVAS_PADDING));
+        const constrainedY = Math.max(CANVAS_PADDING, Math.min(newY, CANVAS_HEIGHT - elHeight - CANVAS_PADDING));
         updateElement(selectedElement, {
-          x: newX,
-          y: newY
+          x: constrainedX,
+          y: constrainedY
         });
       }
     }
@@ -834,23 +885,36 @@ const TemplateEditor = () => {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-3 sm:p-6">
-                      <div ref={canvasRef} data-meme-container className="relative rounded-lg p-2 sm:p-4 min-h-[400px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px] overflow-hidden w-full touch-none select-none" style={{
-                    ...(canvasBackgroundType === 'color' ? {
-                      backgroundColor: canvasBackground
-                    } : {
-                      backgroundImage: `url(${canvasBackground})`,
-                      backgroundPosition: 'center',
-                      backgroundSize: 'cover',
-                      backgroundRepeat: 'no-repeat',
-                      backgroundColor: '#f0f0f0'
-                    }),
-                    touchAction: 'none',
-                    userSelect: 'none',
-                    WebkitUserSelect: 'none',
-                    MozUserSelect: 'none',
-                    msUserSelect: 'none'
-                  }} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+                    <CardContent className="p-3 sm:p-6 flex justify-center">
+                      <div 
+                        ref={canvasRef} 
+                        data-meme-container 
+                        className="relative overflow-hidden touch-none select-none border-4 border-gray-600" 
+                        style={{
+                          width: `${CANVAS_WIDTH}px`,
+                          height: `${CANVAS_HEIGHT}px`,
+                          borderRadius: 0, // Sharp rectangular edges
+                          ...(canvasBackgroundType === 'color' ? {
+                            backgroundColor: canvasBackground
+                          } : {
+                            backgroundImage: `url(${canvasBackground})`,
+                            backgroundPosition: 'center',
+                            backgroundSize: 'cover',
+                            backgroundRepeat: 'no-repeat',
+                            backgroundColor: '#f0f0f0'
+                          }),
+                          touchAction: 'none',
+                          userSelect: 'none',
+                          WebkitUserSelect: 'none',
+                          MozUserSelect: 'none',
+                          msUserSelect: 'none'
+                        }} 
+                        onMouseMove={handleMouseMove} 
+                        onMouseUp={handleMouseUp} 
+                        onMouseLeave={handleMouseUp} 
+                        onTouchMove={handleTouchMove} 
+                        onTouchEnd={handleTouchEnd}
+                      >
                         {selectedTemplate.type === 'preset' ? <>
                             <img src={selectedTemplate.image} alt="Template" className="w-full rounded-lg cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setShowReplaceDialog(true)} />
                             {selectedTemplate.texts.map((text: string, index: number) => <div key={index} className={`absolute text-white font-bold text-lg text-center cursor-pointer px-2 py-1 rounded ${index === 0 ? 'top-4' : 'bottom-4'} left-1/2 transform -translate-x-1/2`} style={{
@@ -1172,14 +1236,14 @@ const TemplateEditor = () => {
                         Add Text
                       </Button>
                        <div className="space-y-2 p-2 bg-gray-700/50 rounded-lg">
-                         <label className="text-xs text-gray-400 block">Number of Image Containers</label>
+                         <label className="text-xs text-gray-400 block">Number of Image Containers (max 150)</label>
                          <div className="flex items-center gap-2">
                            <Input 
                              type="number" 
                              min={1} 
-                             max={20} 
+                             max={150} 
                              value={shapeCount} 
-                             onChange={(e) => setShapeCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+                             onChange={(e) => setShapeCount(Math.max(1, Math.min(150, parseInt(e.target.value) || 1)))}
                              className="bg-gray-700 border-gray-600 text-white w-20 text-center"
                            />
                            <Button onClick={addMultipleImageElements} className="flex-1 bg-green-600 hover:bg-green-700 text-xs sm:text-sm py-3 sm:py-2 min-h-[44px] sm:min-h-auto">
@@ -1587,14 +1651,14 @@ const TemplateEditor = () => {
 
                   {/* Number of shapes input */}
                   <div className="space-y-2 p-3 bg-gray-700/50 rounded-lg">
-                    <label className="text-sm text-gray-300">Number of Shapes to Add</label>
+                    <label className="text-sm text-gray-300">Number of Shapes to Add (max 150)</label>
                     <div className="flex items-center gap-2">
                       <Input 
                         type="number" 
                         min={1} 
-                        max={20} 
+                        max={150} 
                         value={shapeCount} 
-                        onChange={(e) => setShapeCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+                        onChange={(e) => setShapeCount(Math.max(1, Math.min(150, parseInt(e.target.value) || 1)))}
                         className="bg-gray-700 border-gray-600 text-white w-20 text-center"
                       />
                       <Button 
