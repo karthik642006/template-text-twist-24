@@ -344,6 +344,42 @@ const TemplateEditor = () => {
     });
   };
 
+  const addMultipleShapeElements = (shapeType: ShapeType, color: string, fillColor: string, strokeWidth: number) => {
+    const count = Math.max(1, Math.min(shapeCount, 20));
+    const newElements: TemplateElement[] = [];
+    const baseX = 50;
+    const baseY = 50;
+    const spacing = 100;
+    const itemsPerRow = 4;
+    
+    for (let i = 0; i < count; i++) {
+      const col = i % itemsPerRow;
+      const row = Math.floor(i / itemsPerRow);
+      newElements.push({
+        id: Date.now() + i,
+        type: 'shape',
+        x: baseX + col * spacing,
+        y: baseY + row * spacing,
+        width: shapeType === 'line' ? 100 : 80,
+        height: shapeType === 'line' ? 10 : 80,
+        content: '',
+        color: color,
+        fillColor: fillColor,
+        strokeWidth: strokeWidth,
+        shapeType: shapeType
+      });
+    }
+    
+    setCustomElements(prev => [...prev, ...newElements]);
+    setShowShapesDialog(false);
+    setSelectedShapeType(null);
+    saveToHistory();
+    toast({
+      title: `${count} ${shapeType} shape${count > 1 ? 's' : ''} added!`,
+      description: `Added ${count} ${shapeType} shape${count > 1 ? 's' : ''} to the canvas.`
+    });
+  };
+
   const handleLogoUpload = (logoUrl: string) => {
     const newElement: TemplateElement = {
       id: Date.now(),
@@ -1549,12 +1585,26 @@ const TemplateEditor = () => {
                     </div>
                   </div>
 
-                  <Button 
-                    onClick={() => addShapeElement(selectedShapeType, shapeStrokeColor, shapeFillColor, shapeStrokeWidth)}
-                    className="w-full bg-purple-500 hover:bg-purple-600"
-                  >
-                    Add {selectedShapeType.charAt(0).toUpperCase() + selectedShapeType.slice(1)} to Template
-                  </Button>
+                  {/* Number of shapes input */}
+                  <div className="space-y-2 p-3 bg-gray-700/50 rounded-lg">
+                    <label className="text-sm text-gray-300">Number of Shapes to Add</label>
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        type="number" 
+                        min={1} 
+                        max={20} 
+                        value={shapeCount} 
+                        onChange={(e) => setShapeCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+                        className="bg-gray-700 border-gray-600 text-white w-20 text-center"
+                      />
+                      <Button 
+                        onClick={() => addMultipleShapeElements(selectedShapeType, shapeStrokeColor, shapeFillColor, shapeStrokeWidth)}
+                        className="flex-1 bg-purple-500 hover:bg-purple-600"
+                      >
+                        Add {shapeCount > 1 ? `${shapeCount} ${selectedShapeType.charAt(0).toUpperCase() + selectedShapeType.slice(1)}s` : selectedShapeType.charAt(0).toUpperCase() + selectedShapeType.slice(1)}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
 
