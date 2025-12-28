@@ -257,13 +257,26 @@ const TemplateEditor = () => {
     saveToHistory();
   };
   const addImageElement = () => {
+    const imageElements = customElements.filter(el => el.type === 'image');
+    if (imageElements.length >= 150) {
+      toast({
+        title: "Image limit reached",
+        description: "You can add a maximum of 150 image containers.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newCount = imageElements.length + 1;
+    const size = Math.max(30, 200 - newCount * 1.5); // Example sizing logic
+
     const newElement: TemplateElement = {
       id: Date.now(),
       type: 'image',
       x: 150,
       y: 150,
-      width: 200,
-      height: 150,
+      width: size,
+      height: size,
       content: ''
     };
     setCustomElements(prev => [...prev, newElement]);
@@ -276,7 +289,17 @@ const TemplateEditor = () => {
   const CANVAS_PADDING = 10;
 
   const addMultipleImageElements = () => {
-    const count = Math.max(1, Math.min(shapeCount, 150)); // Limit between 1 and 150
+    const imageElements = customElements.filter(el => el.type === 'image');
+    if (imageElements.length >= 150) {
+      toast({
+        title: "Image limit reached",
+        description: "You can add a maximum of 150 image containers.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const count = Math.max(1, Math.min(shapeCount, 150 - imageElements.length));
     const newElements: TemplateElement[] = [];
     
     // Calculate optimal grid layout based on count
@@ -458,10 +481,32 @@ const TemplateEditor = () => {
   }
 
   const updateElement = (id: number, updates: Partial<TemplateElement>) => {
-    setCustomElements(prev => prev.map(el => el.id === id ? {
-      ...el,
-      ...updates
-    } : el));
+    setCustomElements(prev => prev.map(el => {
+      if (el.id === id) {
+        const newEl = { ...el, ...updates };
+        const elWidth = newEl.width || 100;
+        const elHeight = newEl.height || 100;
+
+        // Constrain position
+        if (updates.x !== undefined) {
+          newEl.x = Math.max(CANVAS_PADDING, Math.min(updates.x, CANVAS_WIDTH - elWidth - CANVAS_PADDING));
+        }
+        if (updates.y !== undefined) {
+          newEl.y = Math.max(CANVAS_PADDING, Math.min(updates.y, CANVAS_HEIGHT - elHeight - CANVAS_PADDING));
+        }
+
+        // Constrain size
+        if (updates.width !== undefined) {
+          newEl.width = Math.min(updates.width, CANVAS_WIDTH - newEl.x - CANVAS_PADDING);
+        }
+        if (updates.height !== undefined) {
+          newEl.height = Math.min(updates.height, CANVAS_HEIGHT - newEl.y - CANVAS_PADDING);
+        }
+
+        return newEl;
+      }
+      return el;
+    }));
   };
 
   // Save state to history
@@ -639,7 +684,7 @@ const TemplateEditor = () => {
         updateElement(selectedElement, {
           fontSize: newFontSize
         });
-      } else if (element.type === 'image') {
+      } else if (element.type === 'image' || element.type === 'shape') {
         const newWidth = (element.width || 100) * 1.1;
         const newHeight = (element.height || 100) * 1.1;
         updateElement(selectedElement, {
@@ -662,7 +707,7 @@ const TemplateEditor = () => {
         updateElement(selectedElement, {
           fontSize: newFontSize
         });
-      } else if (element.type === 'image') {
+      } else if (element.type === 'image' || element.type === 'shape') {
         const newWidth = Math.max((element.width || 100) * 0.9, 20);
         const newHeight = Math.max((element.height || 100) * 0.9, 20);
         updateElement(selectedElement, {
@@ -893,7 +938,6 @@ const TemplateEditor = () => {
                         style={{
                           width: `${CANVAS_WIDTH}px`,
                           height: `${CANVAS_HEIGHT}px`,
-                          borderRadius: 0, // Sharp rectangular edges
                           ...(canvasBackgroundType === 'color' ? {
                             backgroundColor: canvasBackground
                           } : {
@@ -916,8 +960,8 @@ const TemplateEditor = () => {
                         onTouchEnd={handleTouchEnd}
                       >
                         {selectedTemplate.type === 'preset' ? <>
-                            <img src={selectedTemplate.image} alt="Template" className="w-full rounded-lg cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setShowReplaceDialog(true)} />
-                            {selectedTemplate.texts.map((text: string, index: number) => <div key={index} className={`absolute text-white font-bold text-lg text-center cursor-pointer px-2 py-1 rounded ${index === 0 ? 'top-4' : 'bottom-4'} left-1/2 transform -translate-x-1/2`} style={{
+                            <img src={selectedTemplate.image} alt="Template" className="w-full cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setShowReplaceDialog(true)} />
+                            {selectedTemplate.texts.map((text: string, index: number) => <div key={index} className={`absolute text-white font-bold text-lg text-center cursor-pointer px-2 py-1 ${index === 0 ? 'top-4' : 'bottom-4'} left-1/2 transform -translate-x-1/2`} style={{
                         textShadow: '2px 2px 0px #000000, -2px -2px 0px #000000, 2px -2px 0px #000000, -2px 2px 0px #000000',
                         WebkitTextStroke: '1px #000000'
                       }} onClick={() => {
@@ -927,7 +971,7 @@ const TemplateEditor = () => {
                                 {text}
                               </div>)}
                           </> : <>
-                             {customElements.map(element => <div key={element.id} className={`absolute cursor-move border-2 ${selectedElement === element.id && element.content ? 'border-blue-400' : 'border-transparent'} rounded transition-all duration-200 hover:border-blue-300`} style={{
+                             {customElements.map(element => <div key={element.id} className={`absolute cursor-move border-2 ${selectedElement === element.id && element.content ? 'border-blue-400' : 'border-transparent'} transition-all duration-200 hover:border-blue-300`} style={{
                         left: element.x,
                         top: element.y,
                         width: element.width,
@@ -1030,7 +1074,7 @@ const TemplateEditor = () => {
                                         return (
                                           <clipPath key={id} id={id}>
                                             {shape.shapeType === 'circle' && <ellipse cx={w / 2} cy={h / 2} rx={w / 2 - sw} ry={h/2 - sw} />}
-                                            {(shape.shapeType === 'square' || shape.shapeType === 'rectangle' || shape.shapeType === 'rounded-rectangle') && <rect x={sw / 2} y={sw / 2} width={w - sw} height={h - sw} rx={shape.shapeType === 'rounded-rectangle' ? 10 : 0} />}
+                                            {(shape.shapeType === 'square' || shape.shapeType === 'rectangle' || shape.shapeType === 'rounded-rectangle') && <rect x={sw / 2} y={sw / 2} width={w - sw} height={h - sw} rx={shape.shapeType === 'rounded-rectangle' ? 0 : 0} />}
                                             {shape.shapeType === 'triangle' && <polygon points={`${w / 2},${sw} ${w - sw},${h - sw} ${sw},${h - sw}`} />}
                                             {shape.shapeType === 'pentagon' && (() => {
                                               const cx = w / 2; const cy = h / 2; const r = Math.min(w, h) / 2 - sw;
@@ -1086,7 +1130,7 @@ const TemplateEditor = () => {
                                         fill={shape.imageUrl ? 'none' : (shape.fillColor || 'transparent')}
                                         stroke={shape.color || '#000000'} 
                                         strokeWidth={shape.strokeWidth || 2}
-                                        rx={shape.shapeType === 'rounded-rectangle' ? 10 : 0}
+                                        rx={shape.shapeType === 'rounded-rectangle' ? 0 : 0}
                                       />
                                     )}
                                     {shape.shapeType === 'triangle' && (
@@ -1158,7 +1202,7 @@ const TemplateEditor = () => {
                                     })()}
                                   </svg>
                                   {selectedElement === shape.id && (
-                                    <div className="absolute inset-0 ring-2 ring-blue-400 ring-opacity-50 pointer-events-none rounded" />
+                                    <div className="absolute inset-0 ring-2 ring-blue-400 ring-opacity-50 pointer-events-none" />
                                   )}
                                 </div>
                               ))}
