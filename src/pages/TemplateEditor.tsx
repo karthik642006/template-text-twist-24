@@ -97,6 +97,9 @@ const TemplateEditor = () => {
   const [shapeFillColor, setShapeFillColor] = useState("#ffffff");
   const [shapeStrokeWidth, setShapeStrokeWidth] = useState(2);
   
+  // Number of shapes to add
+  const [shapeCount, setShapeCount] = useState(1);
+  
   const canvasRef = useRef<HTMLDivElement>(null);
   const {
     toast
@@ -265,6 +268,36 @@ const TemplateEditor = () => {
     };
     setCustomElements(prev => [...prev, newElement]);
     saveToHistory();
+  };
+
+  const addMultipleImageElements = () => {
+    const count = Math.max(1, Math.min(shapeCount, 20)); // Limit between 1 and 20
+    const newElements: TemplateElement[] = [];
+    const baseX = 50;
+    const baseY = 50;
+    const spacing = 120;
+    const itemsPerRow = 4;
+    
+    for (let i = 0; i < count; i++) {
+      const col = i % itemsPerRow;
+      const row = Math.floor(i / itemsPerRow);
+      newElements.push({
+        id: Date.now() + i,
+        type: 'image',
+        x: baseX + col * spacing,
+        y: baseY + row * spacing,
+        width: 100,
+        height: 100,
+        content: ''
+      });
+    }
+    
+    setCustomElements(prev => [...prev, ...newElements]);
+    saveToHistory();
+    toast({
+      title: `${count} image container${count > 1 ? 's' : ''} added!`,
+      description: `Added ${count} image placeholder${count > 1 ? 's' : ''} to the canvas.`
+    });
   };
   const addLineElement = (lineType: 'horizontal' | 'vertical') => {
     const centerX = 300;
@@ -1102,10 +1135,23 @@ const TemplateEditor = () => {
                         <Plus className="w-4 h-4 mr-2" />
                         Add Text
                       </Button>
-                       <Button onClick={addImageElement} className="w-full bg-green-600 hover:bg-green-700 text-xs sm:text-sm py-3 sm:py-2 min-h-[44px] sm:min-h-auto">
-                         <Plus className="w-4 h-4 mr-2" />
-                         Add Image
-                       </Button>
+                       <div className="space-y-2 p-2 bg-gray-700/50 rounded-lg">
+                         <label className="text-xs text-gray-400 block">Number of Image Containers</label>
+                         <div className="flex items-center gap-2">
+                           <Input 
+                             type="number" 
+                             min={1} 
+                             max={20} 
+                             value={shapeCount} 
+                             onChange={(e) => setShapeCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+                             className="bg-gray-700 border-gray-600 text-white w-20 text-center"
+                           />
+                           <Button onClick={addMultipleImageElements} className="flex-1 bg-green-600 hover:bg-green-700 text-xs sm:text-sm py-3 sm:py-2 min-h-[44px] sm:min-h-auto">
+                             <Plus className="w-4 h-4 mr-2" />
+                             Add {shapeCount > 1 ? `${shapeCount} Images` : 'Image'}
+                           </Button>
+                         </div>
+                       </div>
                        <div className="grid grid-cols-2 gap-2">
                          <Button onClick={() => addLineElement('horizontal')} className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm py-3 sm:py-2 min-h-[44px] sm:min-h-auto">
                            <Minus className="w-4 h-4 mr-1" />
