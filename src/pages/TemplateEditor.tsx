@@ -99,6 +99,7 @@ const TemplateEditor = () => {
   
   // Number of shapes to add
   const [shapeCount, setShapeCount] = useState(1);
+  const [imageContainerSize, setImageContainerSize] = useState(100);
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const {
@@ -256,70 +257,38 @@ const TemplateEditor = () => {
     setCustomElements(prev => [...prev, newElement]);
     saveToHistory();
   };
-  const addImageElement = () => {
-    const imageElements = customElements.filter(el => el.type === 'image');
-    if (imageElements.length >= 150) {
-      toast({
-        title: "Image limit reached",
-        description: "You can add a maximum of 150 image containers.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const newCount = imageElements.length + 1;
-    const size = Math.max(30, 200 - newCount * 1.5); // Example sizing logic
-
-    const newElement: TemplateElement = {
-      id: Date.now(),
-      type: 'image',
-      x: 150,
-      y: 150,
-      width: size,
-      height: size,
-      content: ''
-    };
-    setCustomElements(prev => [...prev, newElement]);
-    saveToHistory();
-  };
 
   // Template canvas dimensions
   const CANVAS_WIDTH = 600;
   const CANVAS_HEIGHT = 500;
   const CANVAS_PADDING = 10;
 
-  const addMultipleImageElements = () => {
-    const imageElements = customElements.filter(el => el.type === 'image');
-    if (imageElements.length >= 150) {
-      toast({
-        title: "Image limit reached",
-        description: "You can add a maximum of 150 image containers.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const count = Math.max(1, Math.min(shapeCount, 150 - imageElements.length));
-    const newElements: TemplateElement[] = [];
-    
-    // Calculate optimal grid layout based on count
+  const calculateGridLayout = (count: number, containerSize: number) => {
     const cols = Math.ceil(Math.sqrt(count));
     const rows = Math.ceil(count / cols);
-    
-    // Calculate size to fit within canvas with padding
-    const availableWidth = CANVAS_WIDTH - CANVAS_PADDING * 2;
-    const availableHeight = CANVAS_HEIGHT - CANVAS_PADDING * 2;
     const gap = 5;
-    
-    const containerWidth = Math.floor((availableWidth - gap * (cols - 1)) / cols);
-    const containerHeight = Math.floor((availableHeight - gap * (rows - 1)) / rows);
-    const size = Math.min(containerWidth, containerHeight, 150); // Cap max size
-    
-    // Recalculate to center the grid
+    const availableWidth = CANVAS_WIDTH - CANVAS_PADDING * 2;
+    let size = containerSize;
+
+    const maxContainerWidth = Math.floor((availableWidth - gap * (cols - 1)) / cols);
+    if (size > maxContainerWidth) {
+      size = maxContainerWidth;
+    }
+
     const totalWidth = cols * size + (cols - 1) * gap;
-    const totalHeight = rows * size + (rows - 1) * gap;
-    const startX = CANVAS_PADDING + (availableWidth - totalWidth) / 2;
-    const startY = CANVAS_PADDING + (availableHeight - totalHeight) / 2;
+    const startX = CANVAS_WIDTH - totalWidth - CANVAS_PADDING;
+    const startY = CANVAS_PADDING;
+
+    return { cols, rows, size, startX, startY, gap };
+  };
+
+  const addMultipleImageElements = () => {
+    const imageElements = customElements.filter(el => el.type === 'image');
+
+    const count = Math.max(1, shapeCount);
+    const newElements: TemplateElement[] = [];
+
+    const { cols, size, startX, startY, gap } = calculateGridLayout(count, imageContainerSize);
     
     for (let i = 0; i < count; i++) {
       const col = i % cols;
@@ -366,13 +335,28 @@ const TemplateEditor = () => {
   };
   
   const addShapeElement = (shapeType: ShapeType, color: string, fillColor: string, strokeWidth: number) => {
+    const shapeElements = customElements.filter(el => el.type === 'shape');
+    if (shapeElements.length >= 150) {
+      toast({
+        title: "Shape limit reached",
+        description: "You can add a maximum of 150 shapes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newCount = shapeElements.length + 1;
+    const size = Math.max(20, 100 - newCount * 0.5); // Dynamically calculate size
+    const newWidth = shapeType === 'line' ? size : size;
+    const newHeight = shapeType === 'line' ? Math.max(5, size / 8) : size;
+
     const newElement: TemplateElement = {
       id: Date.now(),
       type: 'shape',
-      x: 150,
-      y: 150,
-      width: shapeType === 'line' ? 100 : 80,
-      height: shapeType === 'line' ? 10 : 80,
+      x: CANVAS_WIDTH - newWidth - CANVAS_PADDING, // Position in top-right corner
+      y: CANVAS_PADDING,
+      width: newWidth,
+      height: newHeight,
       content: '',
       color: color,
       fillColor: fillColor,
@@ -391,27 +375,20 @@ const TemplateEditor = () => {
   };
 
   const addMultipleShapeElements = (shapeType: ShapeType, color: string, fillColor: string, strokeWidth: number) => {
-    const count = Math.max(1, Math.min(shapeCount, 150)); // Limit between 1 and 150
+    const shapeElements = customElements.filter(el => el.type === 'shape');
+    if (shapeElements.length >= 150) {
+      toast({
+        title: "Shape limit reached",
+        description: "You can add a maximum of 150 shapes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const count = Math.max(1, Math.min(shapeCount, 150 - shapeElements.length));
     const newElements: TemplateElement[] = [];
     
-    // Calculate optimal grid layout based on count
-    const cols = Math.ceil(Math.sqrt(count));
-    const rows = Math.ceil(count / cols);
-    
-    // Calculate size to fit within canvas with padding
-    const availableWidth = CANVAS_WIDTH - CANVAS_PADDING * 2;
-    const availableHeight = CANVAS_HEIGHT - CANVAS_PADDING * 2;
-    const gap = 5;
-    
-    const containerWidth = Math.floor((availableWidth - gap * (cols - 1)) / cols);
-    const containerHeight = Math.floor((availableHeight - gap * (rows - 1)) / rows);
-    const size = Math.min(containerWidth, containerHeight, 150); // Cap max size
-    
-    // Recalculate to center the grid
-    const totalWidth = cols * size + (cols - 1) * gap;
-    const totalHeight = rows * size + (rows - 1) * gap;
-    const startX = CANVAS_PADDING + (availableWidth - totalWidth) / 2;
-    const startY = CANVAS_PADDING + (availableHeight - totalHeight) / 2;
+    const { cols, size, startX, startY, gap } = calculateGridLayout(count, 150); // Max size of 150 for shapes
     
     for (let i = 0; i < count; i++) {
       const col = i % cols;
@@ -1280,14 +1257,13 @@ const TemplateEditor = () => {
                         Add Text
                       </Button>
                        <div className="space-y-2 p-2 bg-gray-700/50 rounded-lg">
-                         <label className="text-xs text-gray-400 block">Number of Image Containers (max 150)</label>
+                         <label className="text-xs text-gray-400 block">Number of Image Containers</label>
                          <div className="flex items-center gap-2">
                            <Input 
                              type="number" 
                              min={1} 
-                             max={150} 
                              value={shapeCount} 
-                             onChange={(e) => setShapeCount(Math.max(1, Math.min(150, parseInt(e.target.value) || 1)))}
+                             onChange={(e) => setShapeCount(Math.max(1, parseInt(e.target.value) || 1))}
                              className="bg-gray-700 border-gray-600 text-white w-20 text-center"
                            />
                            <Button onClick={addMultipleImageElements} className="flex-1 bg-green-600 hover:bg-green-700 text-xs sm:text-sm py-3 sm:py-2 min-h-[44px] sm:min-h-auto">
@@ -1295,6 +1271,15 @@ const TemplateEditor = () => {
                              Add {shapeCount > 1 ? `${shapeCount} Images` : 'Image'}
                            </Button>
                          </div>
+                         <label className="text-xs text-gray-400 block mt-2">Container Size: {imageContainerSize}px</label>
+                         <Slider
+                           value={[imageContainerSize]}
+                           onValueChange={(value) => setImageContainerSize(value[0])}
+                           min={20}
+                           max={300}
+                           step={5}
+                           className="w-full"
+                         />
                        </div>
                        <div className="grid grid-cols-2 gap-2">
                          <Button onClick={() => addLineElement('horizontal')} className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm py-3 sm:py-2 min-h-[44px] sm:min-h-auto">
