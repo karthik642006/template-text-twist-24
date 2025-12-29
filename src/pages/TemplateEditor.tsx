@@ -268,11 +268,16 @@ const TemplateEditor = () => {
     const rows = Math.ceil(count / cols);
     const gap = 5;
     const availableWidth = CANVAS_WIDTH - CANVAS_PADDING * 2;
+    const availableHeight = CANVAS_HEIGHT - CANVAS_PADDING * 2;
     let size = containerSize;
 
+    // Ensure size fits within available space
     const maxContainerWidth = Math.floor((availableWidth - gap * (cols - 1)) / cols);
-    if (size > maxContainerWidth) {
-      size = maxContainerWidth;
+    const maxContainerHeight = Math.floor((availableHeight - gap * (rows - 1)) / rows);
+    const maxSize = Math.min(maxContainerWidth, maxContainerHeight);
+    
+    if (size > maxSize) {
+      size = maxSize;
     }
 
     const totalWidth = cols * size + (cols - 1) * gap;
@@ -283,8 +288,6 @@ const TemplateEditor = () => {
   };
 
   const addMultipleImageElements = () => {
-    const imageElements = customElements.filter(el => el.type === 'image');
-
     const count = Math.max(1, shapeCount);
     const newElements: TemplateElement[] = [];
 
@@ -311,7 +314,7 @@ const TemplateEditor = () => {
     saveToHistory();
     toast({
       title: `${count} image container${count > 1 ? 's' : ''} added!`,
-      description: `Added ${count} image placeholder${count > 1 ? 's' : ''} to the canvas.`
+      description: `Added ${count} container${count > 1 ? 's' : ''} (${size}px each) to the canvas.`
     });
   };
   const addLineElement = (lineType: 'horizontal' | 'vertical') => {
@@ -1256,30 +1259,33 @@ const TemplateEditor = () => {
                         <Plus className="w-4 h-4 mr-2" />
                         Add Text
                       </Button>
-                       <div className="space-y-2 p-2 bg-gray-700/50 rounded-lg">
-                         <label className="text-xs text-gray-400 block">Number of Image Containers</label>
-                         <div className="flex items-center gap-2">
+                       <div className="space-y-3 p-2 bg-gray-700/50 rounded-lg">
+                         <div>
+                           <label className="text-xs text-gray-400 block mb-1">Number of Image Containers</label>
                            <Input 
                              type="number" 
                              min={1} 
                              value={shapeCount} 
                              onChange={(e) => setShapeCount(Math.max(1, parseInt(e.target.value) || 1))}
-                             className="bg-gray-700 border-gray-600 text-white w-20 text-center"
+                             className="bg-gray-700 border-gray-600 text-white w-full text-center"
+                             placeholder="Enter count (unlimited)"
                            />
-                           <Button onClick={addMultipleImageElements} className="flex-1 bg-green-600 hover:bg-green-700 text-xs sm:text-sm py-3 sm:py-2 min-h-[44px] sm:min-h-auto">
-                             <Plus className="w-4 h-4 mr-2" />
-                             Add {shapeCount > 1 ? `${shapeCount} Images` : 'Image'}
-                           </Button>
                          </div>
-                         <label className="text-xs text-gray-400 block mt-2">Container Size: {imageContainerSize}px</label>
-                         <Slider
-                           value={[imageContainerSize]}
-                           onValueChange={(value) => setImageContainerSize(value[0])}
-                           min={20}
-                           max={300}
-                           step={5}
-                           className="w-full"
-                         />
+                         <div>
+                           <label className="text-xs text-gray-400 block mb-1">Container Size: {imageContainerSize}px</label>
+                           <Slider
+                             value={[imageContainerSize]}
+                             onValueChange={(value) => setImageContainerSize(value[0])}
+                             min={10}
+                             max={300}
+                             step={5}
+                             className="w-full"
+                           />
+                         </div>
+                         <Button onClick={addMultipleImageElements} className="w-full bg-green-600 hover:bg-green-700 text-xs sm:text-sm py-3 sm:py-2 min-h-[44px] sm:min-h-auto">
+                           <Plus className="w-4 h-4 mr-2" />
+                           Add {shapeCount > 1 ? `${shapeCount} Images` : 'Image'} ({imageContainerSize}px)
+                         </Button>
                        </div>
                        <div className="grid grid-cols-2 gap-2">
                          <Button onClick={() => addLineElement('horizontal')} className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm py-3 sm:py-2 min-h-[44px] sm:min-h-auto">
