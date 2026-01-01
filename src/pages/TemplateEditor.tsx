@@ -281,8 +281,8 @@ const TemplateEditor = () => {
       size = maxSize;
     }
 
-    const totalWidth = cols * size + (cols - 1) * gap;
-    const startX = CANVAS_WIDTH - totalWidth - CANVAS_PADDING;
+    // Start from left side of canvas
+    const startX = CANVAS_PADDING;
     const startY = CANVAS_PADDING;
 
     return { cols, rows, size, startX, startY, gap };
@@ -346,7 +346,7 @@ const TemplateEditor = () => {
     const newElement: TemplateElement = {
       id: Date.now(),
       type: 'shape',
-      x: CANVAS_WIDTH - newWidth - CANVAS_PADDING,
+      x: CANVAS_PADDING,
       y: CANVAS_PADDING,
       width: newWidth,
       height: newHeight,
@@ -890,35 +890,46 @@ const TemplateEditor = () => {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-3 sm:p-6 flex justify-center">
+                    <CardContent className="p-3 sm:p-6 flex justify-center overflow-auto">
                       <div 
-                        ref={canvasRef} 
-                        data-meme-container 
-                        className="relative overflow-hidden touch-none select-none border-4 border-gray-600" 
+                        className="relative"
                         style={{
-                          width: `${CANVAS_WIDTH}px`,
-                          height: `${CANVAS_HEIGHT}px`,
-                          ...(canvasBackgroundType === 'color' ? {
-                            backgroundColor: canvasBackground
-                          } : {
-                            backgroundImage: `url(${canvasBackground})`,
-                            backgroundPosition: 'center',
-                            backgroundSize: 'cover',
-                            backgroundRepeat: 'no-repeat',
-                            backgroundColor: '#f0f0f0'
-                          }),
-                          touchAction: 'none',
-                          userSelect: 'none',
-                          WebkitUserSelect: 'none',
-                          MozUserSelect: 'none',
-                          msUserSelect: 'none'
-                        }} 
-                        onMouseMove={handleMouseMove} 
-                        onMouseUp={handleMouseUp} 
-                        onMouseLeave={handleMouseUp} 
-                        onTouchMove={handleTouchMove} 
-                        onTouchEnd={handleTouchEnd}
+                          width: 'fit-content',
+                          height: 'fit-content',
+                          maxWidth: '100%',
+                          overflow: 'auto'
+                        }}
                       >
+                        <div 
+                          ref={canvasRef} 
+                          data-meme-container 
+                          className="relative overflow-hidden touch-none select-none border-4 border-gray-600" 
+                          style={{
+                            width: `${CANVAS_WIDTH}px`,
+                            height: `${CANVAS_HEIGHT}px`,
+                            minWidth: `${CANVAS_WIDTH}px`,
+                            minHeight: `${CANVAS_HEIGHT}px`,
+                            ...(canvasBackgroundType === 'color' ? {
+                              backgroundColor: canvasBackground
+                            } : {
+                              backgroundImage: `url(${canvasBackground})`,
+                              backgroundPosition: 'center',
+                              backgroundSize: 'cover',
+                              backgroundRepeat: 'no-repeat',
+                              backgroundColor: '#f0f0f0'
+                            }),
+                            touchAction: 'none',
+                            userSelect: 'none',
+                            WebkitUserSelect: 'none',
+                            MozUserSelect: 'none',
+                            msUserSelect: 'none'
+                          }} 
+                          onMouseMove={handleMouseMove} 
+                          onMouseUp={handleMouseUp} 
+                          onMouseLeave={handleMouseUp} 
+                          onTouchMove={handleTouchMove} 
+                          onTouchEnd={handleTouchEnd}
+                        >
                         {selectedTemplate.type === 'preset' ? <>
                             <img src={selectedTemplate.image} alt="Template" className="w-full cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setShowReplaceDialog(true)} />
                             {selectedTemplate.texts.map((text: string, index: number) => <div key={index} className={`absolute text-white font-bold text-lg text-center cursor-pointer px-2 py-1 ${index === 0 ? 'top-4' : 'bottom-4'} left-1/2 transform -translate-x-1/2`} style={{
@@ -1167,6 +1178,7 @@ const TemplateEditor = () => {
                                 </div>
                               ))}
                           </>}
+                        </div>
                       </div>
 
                       <div className="flex flex-row space-x-1 mt-4">
