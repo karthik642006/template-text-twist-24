@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Upload, Download, Share, X, Plus, Square, ArrowLeft, Minus, Circle, Triangle, Pentagon, Shapes, Star, Heart } from "lucide-react";
+import { useDebounce } from "use-debounce";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import HamburgerMenu from "@/components/HamburgerMenu";
@@ -101,6 +102,10 @@ const TemplateEditor = () => {
   const [shapeCount, setShapeCount] = useState(1);
   const [imageContainerSize, setImageContainerSize] = useState(100);
   const [shapeContainerSize, setShapeContainerSize] = useState(100);
+
+  const [debouncedShapeCount] = useDebounce(shapeCount, 500);
+  const [debouncedImageContainerSize] = useDebounce(imageContainerSize, 500);
+  const [debouncedShapeContainerSize] = useDebounce(shapeContainerSize, 500);
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const {
@@ -263,6 +268,7 @@ const TemplateEditor = () => {
   const CANVAS_WIDTH = 1080;
   const CANVAS_HEIGHT = 850;
   const CANVAS_PADDING = 10;
+  const MAX_ELEMENTS = 500;
 
   const calculateGridLayout = (count: number, containerSize: number) => {
     const cols = Math.ceil(Math.sqrt(count));
@@ -289,6 +295,14 @@ const TemplateEditor = () => {
   };
 
   const addMultipleImageElements = () => {
+    if (shapeCount > MAX_ELEMENTS) {
+      toast({
+        title: "Element limit exceeded",
+        description: `You can add a maximum of ${MAX_ELEMENTS} image containers at a time.`,
+        variant: "destructive",
+      });
+      return;
+    }
     const count = Math.max(1, shapeCount);
     const newElements: TemplateElement[] = [];
 
@@ -368,6 +382,14 @@ const TemplateEditor = () => {
   };
 
   const addMultipleShapeElements = (shapeType: ShapeType, color: string, fillColor: string, strokeWidth: number) => {
+    if (shapeCount > MAX_ELEMENTS) {
+      toast({
+        title: "Element limit exceeded",
+        description: `You can add a maximum of ${MAX_ELEMENTS} shapes at a time.`,
+        variant: "destructive",
+      });
+      return;
+    }
     const count = Math.max(1, shapeCount);
     const newElements: TemplateElement[] = [];
     
@@ -1260,7 +1282,7 @@ const TemplateEditor = () => {
                              value={shapeCount} 
                              onChange={(e) => setShapeCount(Math.max(1, parseInt(e.target.value) || 1))}
                              className="bg-gray-700 border-gray-600 text-white w-full text-center"
-                             placeholder="Enter count (unlimited)"
+                             placeholder={`Enter count (max ${MAX_ELEMENTS})`}
                            />
                          </div>
                          <div>
@@ -1276,7 +1298,7 @@ const TemplateEditor = () => {
                          </div>
                          <Button onClick={addMultipleImageElements} className="w-full bg-green-600 hover:bg-green-700 text-xs sm:text-sm py-3 sm:py-2 min-h-[44px] sm:min-h-auto">
                            <Plus className="w-4 h-4 mr-2" />
-                           Add {shapeCount > 1 ? `${shapeCount} Images` : 'Image'} ({imageContainerSize}px)
+                           Add {debouncedShapeCount > 1 ? `${debouncedShapeCount} Images` : 'Image'} ({debouncedImageContainerSize}px)
                          </Button>
                        </div>
                        <div className="grid grid-cols-2 gap-2">
@@ -1679,14 +1701,14 @@ const TemplateEditor = () => {
                   {/* Number of shapes and size input */}
                   <div className="space-y-3 p-3 bg-gray-700/50 rounded-lg">
                     <div>
-                      <label className="text-sm text-gray-300 block mb-1">Number of Shapes (unlimited)</label>
+                      <label className="text-sm text-gray-300 block mb-1">Number of Shapes (max {MAX_ELEMENTS})</label>
                       <Input 
                         type="number" 
                         min={1} 
                         value={shapeCount} 
                         onChange={(e) => setShapeCount(Math.max(1, parseInt(e.target.value) || 1))}
                         className="bg-gray-700 border-gray-600 text-white w-full text-center"
-                        placeholder="Enter count (unlimited)"
+                        placeholder={`Enter count (max ${MAX_ELEMENTS})`}
                       />
                     </div>
                     <div>
@@ -1704,7 +1726,7 @@ const TemplateEditor = () => {
                       onClick={() => addMultipleShapeElements(selectedShapeType, shapeStrokeColor, shapeFillColor, shapeStrokeWidth)}
                       className="w-full bg-purple-500 hover:bg-purple-600"
                     >
-                      Add {shapeCount > 1 ? `${shapeCount} ${selectedShapeType.charAt(0).toUpperCase() + selectedShapeType.slice(1)}s` : selectedShapeType.charAt(0).toUpperCase() + selectedShapeType.slice(1)} ({shapeContainerSize}px)
+                      Add {debouncedShapeCount > 1 ? `${debouncedShapeCount} ${selectedShapeType.charAt(0).toUpperCase() + selectedShapeType.slice(1)}s` : selectedShapeType.charAt(0).toUpperCase() + selectedShapeType.slice(1)} ({debouncedShapeContainerSize}px)
                     </Button>
                   </div>
                 </div>
