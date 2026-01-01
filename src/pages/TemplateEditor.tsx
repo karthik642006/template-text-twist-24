@@ -100,6 +100,7 @@ const TemplateEditor = () => {
   // Number of shapes to add
   const [shapeCount, setShapeCount] = useState(1);
   const [imageContainerSize, setImageContainerSize] = useState(100);
+  const [shapeContainerSize, setShapeContainerSize] = useState(100);
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const {
@@ -259,8 +260,8 @@ const TemplateEditor = () => {
   };
 
   // Template canvas dimensions
-  const CANVAS_WIDTH = 600;
-  const CANVAS_HEIGHT = 500;
+  const CANVAS_WIDTH = 1080;
+  const CANVAS_HEIGHT = 850;
   const CANVAS_PADDING = 10;
 
   const calculateGridLayout = (count: number, containerSize: number) => {
@@ -338,25 +339,14 @@ const TemplateEditor = () => {
   };
   
   const addShapeElement = (shapeType: ShapeType, color: string, fillColor: string, strokeWidth: number) => {
-    const shapeElements = customElements.filter(el => el.type === 'shape');
-    if (shapeElements.length >= 150) {
-      toast({
-        title: "Shape limit reached",
-        description: "You can add a maximum of 150 shapes.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const newCount = shapeElements.length + 1;
-    const size = Math.max(20, 100 - newCount * 0.5); // Dynamically calculate size
+    const size = shapeContainerSize;
     const newWidth = shapeType === 'line' ? size : size;
     const newHeight = shapeType === 'line' ? Math.max(5, size / 8) : size;
 
     const newElement: TemplateElement = {
       id: Date.now(),
       type: 'shape',
-      x: CANVAS_WIDTH - newWidth - CANVAS_PADDING, // Position in top-right corner
+      x: CANVAS_WIDTH - newWidth - CANVAS_PADDING,
       y: CANVAS_PADDING,
       width: newWidth,
       height: newHeight,
@@ -373,25 +363,15 @@ const TemplateEditor = () => {
     saveToHistory();
     toast({
       title: "Shape added!",
-      description: `${shapeType.charAt(0).toUpperCase() + shapeType.slice(1)} shape has been added to the canvas.`
+      description: `${shapeType.charAt(0).toUpperCase() + shapeType.slice(1)} shape (${size}px) has been added to the canvas.`
     });
   };
 
   const addMultipleShapeElements = (shapeType: ShapeType, color: string, fillColor: string, strokeWidth: number) => {
-    const shapeElements = customElements.filter(el => el.type === 'shape');
-    if (shapeElements.length >= 150) {
-      toast({
-        title: "Shape limit reached",
-        description: "You can add a maximum of 150 shapes.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const count = Math.max(1, Math.min(shapeCount, 150 - shapeElements.length));
+    const count = Math.max(1, shapeCount);
     const newElements: TemplateElement[] = [];
     
-    const { cols, size, startX, startY, gap } = calculateGridLayout(count, 150); // Max size of 150 for shapes
+    const { cols, size, startX, startY, gap } = calculateGridLayout(count, shapeContainerSize);
     
     for (let i = 0; i < count; i++) {
       const col = i % cols;
@@ -420,7 +400,7 @@ const TemplateEditor = () => {
     saveToHistory();
     toast({
       title: `${count} ${shapeType} shape${count > 1 ? 's' : ''} added!`,
-      description: `Added ${count} ${shapeType} shape${count > 1 ? 's' : ''} to the canvas.`
+      description: `Added ${count} shape${count > 1 ? 's' : ''} (${size}px each) to the canvas.`
     });
   };
 
@@ -1684,25 +1664,36 @@ const TemplateEditor = () => {
                     </div>
                   </div>
 
-                  {/* Number of shapes input */}
-                  <div className="space-y-2 p-3 bg-gray-700/50 rounded-lg">
-                    <label className="text-sm text-gray-300">Number of Shapes to Add (max 150)</label>
-                    <div className="flex items-center gap-2">
+                  {/* Number of shapes and size input */}
+                  <div className="space-y-3 p-3 bg-gray-700/50 rounded-lg">
+                    <div>
+                      <label className="text-sm text-gray-300 block mb-1">Number of Shapes (unlimited)</label>
                       <Input 
                         type="number" 
                         min={1} 
-                        max={150} 
                         value={shapeCount} 
-                        onChange={(e) => setShapeCount(Math.max(1, Math.min(150, parseInt(e.target.value) || 1)))}
-                        className="bg-gray-700 border-gray-600 text-white w-20 text-center"
+                        onChange={(e) => setShapeCount(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="bg-gray-700 border-gray-600 text-white w-full text-center"
+                        placeholder="Enter count (unlimited)"
                       />
-                      <Button 
-                        onClick={() => addMultipleShapeElements(selectedShapeType, shapeStrokeColor, shapeFillColor, shapeStrokeWidth)}
-                        className="flex-1 bg-purple-500 hover:bg-purple-600"
-                      >
-                        Add {shapeCount > 1 ? `${shapeCount} ${selectedShapeType.charAt(0).toUpperCase() + selectedShapeType.slice(1)}s` : selectedShapeType.charAt(0).toUpperCase() + selectedShapeType.slice(1)}
-                      </Button>
                     </div>
+                    <div>
+                      <label className="text-sm text-gray-300 block mb-1">Shape Size: {shapeContainerSize}px</label>
+                      <Slider
+                        value={[shapeContainerSize]}
+                        onValueChange={(value) => setShapeContainerSize(value[0])}
+                        min={10}
+                        max={300}
+                        step={5}
+                        className="w-full"
+                      />
+                    </div>
+                    <Button 
+                      onClick={() => addMultipleShapeElements(selectedShapeType, shapeStrokeColor, shapeFillColor, shapeStrokeWidth)}
+                      className="w-full bg-purple-500 hover:bg-purple-600"
+                    >
+                      Add {shapeCount > 1 ? `${shapeCount} ${selectedShapeType.charAt(0).toUpperCase() + selectedShapeType.slice(1)}s` : selectedShapeType.charAt(0).toUpperCase() + selectedShapeType.slice(1)} ({shapeContainerSize}px)
+                    </Button>
                   </div>
                 </div>
               )}
