@@ -202,18 +202,30 @@ const TextToShapeArt = ({ onGenerateShapes }: TextToShapeArtProps) => {
 
     if (points.length === 0) return;
 
-    // Scale points to fit template (1080x850)
-    const scaleX = 800 / (canvas?.width || 400);
-    const scaleY = 600 / (canvas?.height || 200);
-    const offsetX = 140;
-    const offsetY = 125;
+    // Find bounds of the points to center them properly
+    const minX = Math.min(...points.map(p => p.x));
+    const maxX = Math.max(...points.map(p => p.x));
+    const minY = Math.min(...points.map(p => p.y));
+    const maxY = Math.max(...points.map(p => p.y));
+    
+    const pointsWidth = maxX - minX + shapeSize;
+    const pointsHeight = maxY - minY + shapeSize;
+    
+    // Scale to fit within visible area (max 600x400 to ensure visibility)
+    const maxWidth = 600;
+    const maxHeight = 400;
+    const scale = Math.min(maxWidth / pointsWidth, maxHeight / pointsHeight, 1.5);
+    
+    // Position at top-left with padding
+    const offsetX = 20;
+    const offsetY = 20;
 
     const generatedShapes: GeneratedShapeData[] = points.map(point => ({
       type: selectedShape,
-      x: point.x * scaleX + offsetX,
-      y: point.y * scaleY + offsetY,
-      width: shapeSize * 2,
-      height: shapeSize * 2,
+      x: (point.x - minX) * scale + offsetX,
+      y: (point.y - minY) * scale + offsetY,
+      width: shapeSize * scale,
+      height: shapeSize * scale,
       strokeColor,
       fillColor,
       strokeWidth: 1
