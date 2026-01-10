@@ -57,6 +57,9 @@ interface TemplateElement {
   videoUrl?: string;
   // Freehand drawing points
   points?: { x: number; y: number }[];
+  // Custom shape image for mosaics
+  customShapeImage?: string;
+  colorTint?: string;
 }
 
 interface Template {
@@ -441,7 +444,9 @@ const TemplateEditor = () => {
       color: shape.strokeColor,
       fillColor: shape.fillColor,
       strokeWidth: shape.strokeWidth,
-      shapeType: shape.type
+      shapeType: shape.type === 'custom' ? 'square' : shape.type, // Use square as base for custom
+      customShapeImage: shape.customShapeImage,
+      colorTint: shape.colorTint
     }));
     
     setCustomElements(prev => [...prev, ...newElements]);
@@ -1112,7 +1117,29 @@ const TemplateEditor = () => {
                                       })()}
                                     </defs>
 
-                                    {shape.imageUrl && (
+                                    {/* Custom shape image for mosaics */}
+                                    {shape.customShapeImage && (
+                                      <>
+                                        <image
+                                          href={shape.customShapeImage}
+                                          width={shape.width}
+                                          height={shape.height}
+                                          preserveAspectRatio="xMidYMid slice"
+                                        />
+                                        {/* Color tint overlay */}
+                                        {shape.colorTint && (
+                                          <rect
+                                            width={shape.width}
+                                            height={shape.height}
+                                            fill={shape.colorTint}
+                                            opacity={0.4}
+                                            style={{ mixBlendMode: 'multiply' }}
+                                          />
+                                        )}
+                                      </>
+                                    )}
+
+                                    {shape.imageUrl && !shape.customShapeImage && (
                                       <image
                                         href={shape.imageUrl}
                                         width="100%"
@@ -1120,7 +1147,7 @@ const TemplateEditor = () => {
                                         clipPath={`url(#clip-${shape.id})`}
                                       />
                                     )}
-                                    {shape.shapeType === 'line' && (
+                                    {shape.shapeType === 'line' && !shape.customShapeImage && (
                                       <line 
                                         x1="0" 
                                         y1={(shape.height || 10) / 2} 
@@ -1130,7 +1157,7 @@ const TemplateEditor = () => {
                                         strokeWidth={shape.strokeWidth || 2} 
                                       />
                                     )}
-                                    {shape.shapeType === 'circle' && (
+                                    {shape.shapeType === 'circle' && !shape.customShapeImage && (
                                       <ellipse 
                                         cx={(shape.width || 80) / 2} 
                                         cy={(shape.height || 80) / 2} 
@@ -1141,7 +1168,7 @@ const TemplateEditor = () => {
                                         strokeWidth={shape.strokeWidth || 2} 
                                       />
                                     )}
-                                    {(shape.shapeType === 'square' || shape.shapeType === 'rectangle' || shape.shapeType === 'rounded-rectangle') && (
+                                    {(shape.shapeType === 'square' || shape.shapeType === 'rectangle' || shape.shapeType === 'rounded-rectangle') && !shape.customShapeImage && (
                                       <rect 
                                         x={(shape.strokeWidth || 2) / 2} 
                                         y={(shape.strokeWidth || 2) / 2} 
@@ -1153,7 +1180,7 @@ const TemplateEditor = () => {
                                         rx={shape.shapeType === 'rounded-rectangle' ? 0 : 0}
                                       />
                                     )}
-                                    {shape.shapeType === 'triangle' && (
+                                    {shape.shapeType === 'triangle' && !shape.customShapeImage && (
                                       <polygon 
                                         points={`${(shape.width || 80) / 2},${shape.strokeWidth || 2} ${(shape.width || 80) - (shape.strokeWidth || 2)},${(shape.height || 80) - (shape.strokeWidth || 2)} ${shape.strokeWidth || 2},${(shape.height || 80) - (shape.strokeWidth || 2)}`}
                                         fill={shape.imageUrl ? 'none' : (shape.fillColor || 'transparent')}
@@ -1161,7 +1188,7 @@ const TemplateEditor = () => {
                                         strokeWidth={shape.strokeWidth || 2} 
                                       />
                                     )}
-                                    {shape.shapeType === 'pentagon' && (() => {
+                                    {shape.shapeType === 'pentagon' && !shape.customShapeImage && (() => {
                                       const w = shape.width || 80;
                                       const h = shape.height || 80;
                                       const cx = w / 2;
@@ -1180,7 +1207,7 @@ const TemplateEditor = () => {
                                         />
                                       );
                                     })()}
-                                    {shape.shapeType === 'star' && (() => {
+                                    {shape.shapeType === 'star' && !shape.customShapeImage && (() => {
                                       const w = shape.width || 80;
                                       const h = shape.height || 80;
                                       const cx = w / 2;
@@ -1202,7 +1229,7 @@ const TemplateEditor = () => {
                                         />
                                       );
                                     })()}
-                                    {shape.shapeType === 'heart' && (() => {
+                                    {shape.shapeType === 'heart' && !shape.customShapeImage && (() => {
                                       const w = shape.width || 80;
                                       const h = shape.height || 80;
                                       const sw = shape.strokeWidth || 2;

@@ -21,6 +21,7 @@ export interface GeneratedShapeData {
   fillColor: string;
   strokeWidth: number;
   customShapeImage?: string;
+  colorTint?: string; // For applying color tint to custom shapes in image mosaic
 }
 
 const TextToShapeArt = ({ onGenerateShapes }: TextToShapeArtProps) => {
@@ -167,21 +168,35 @@ const TextToShapeArt = ({ onGenerateShapes }: TextToShapeArtProps) => {
       const imageData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
       const points = generateImagePoints(imageData, canvas.width, canvas.height);
 
-      points.forEach(point => {
-        ctx.fillStyle = point.color;
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = 0.5;
-        const size = shapeSize / 2;
-        
-        if (customShapeImage && activeTab === 'image') {
-          // Draw custom shape
-          const customImg = new window.Image();
-          customImg.src = customShapeImage;
-          ctx.drawImage(customImg, point.x, point.y, shapeSize, shapeSize);
-        } else {
+      // If custom shape is uploaded, load it first then draw all points
+      if (customShapeImage) {
+        const customImg = new window.Image();
+        customImg.crossOrigin = 'anonymous';
+        customImg.onload = () => {
+          points.forEach(point => {
+            // Apply color tint to the custom shape
+            ctx.save();
+            ctx.globalAlpha = 0.9;
+            ctx.drawImage(customImg, point.x, point.y, shapeSize, shapeSize);
+            
+            // Overlay color tint
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.fillStyle = point.color;
+            ctx.fillRect(point.x, point.y, shapeSize, shapeSize);
+            
+            ctx.restore();
+          });
+        };
+        customImg.src = customShapeImage;
+      } else {
+        points.forEach(point => {
+          ctx.fillStyle = point.color;
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = 0.5;
+          const size = shapeSize / 2;
           drawShapeAtPoint(ctx, point.x, point.y, size, selectedShape);
-        }
-      });
+        });
+      }
     };
     img.src = uploadedImage;
   }, [uploadedImage, selectedShape, shapeSize, spacing, strokeColor, activeTab, customShapeImage]);
@@ -400,7 +415,9 @@ const TextToShapeArt = ({ onGenerateShapes }: TextToShapeArtProps) => {
         strokeColor,
         fillColor: point.color,
         strokeWidth: 0.5,
-        customShapeImage: customShapeImage || undefined
+        customShapeImage: customShapeImage || undefined,
+        // Pass color tint for custom shapes to recreate the image
+        colorTint: customShapeImage ? point.color : undefined
       }));
 
       onGenerateShapes(generatedShapes);
